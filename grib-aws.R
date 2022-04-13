@@ -1,5 +1,10 @@
+library(tidyverse)
 library(terra)
-library(purrr)
+library(processx)
+
+threads <- 140 # can probably be at least 140, maybe 280, depending on free RAM
+
+
 gefs <- function(
     horizon = "000", # 000:384 hrs ahead
     base = "https://noaa-gefs-pds.s3.amazonaws.com/",
@@ -14,14 +19,34 @@ gefs <- function(
              "gefs.{date}/{cycle}/{series}/{set}p5/",
              "ge{NN}.t{cycle}z.{set}.{res}.f{horizon}")
 }
-c("006") -> i1
-paste0("0",as.character(seq(12,96,by=6))) -> i2
-as.character(seq(102,840, by=6)) -> i3
-src <- map_chr(c(i1,i2,i3), gefs)
+## every 6 hrs, 35 days out, all ensemble members
+horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
+ensemble <-  paste0("p", stringr::str_pad(1:31, 2, pad="0"))
+nrow(cases)
+cases <- expand.grid(horizon, ensemble) |> 
+  setNames(c("horizon", "ensemble")) |>
+  rowwise() |> 
+  mutate(url = gefs(horizon, NN=ensemble))
+src <- cases$url
 
 gdal <- paste("gdal_translate -of GTIFF -b 63 -b 64 -b 65 -b 66 -b 67 -b 68 -b 69 -b 70", src, paste0(basename(src), ".tif &"))
-gdal <- c(gdal, "wait", "echo 'Finshed!'")
+groups <- seq(1, length(src), by=threads)
 
-readr::write_lines(gdal, "src.sh")
+cmd <- ""
+for(i in 1:(length(groups)-1)){
+  cmd <- c(cmd, gdal[seq(groups[i],groups[i+1], by=1)], "wait")
+}
+cmd <- c(cmd, "wait", "echo 'Finshed!'")
+readr::write_lines(cmd, "src.sh")
+bench::bench_time(processx::run("bash", "src.sh"))
 
-bench::bench_time(system2("bash", "src.sh"))
+
+bench::bench_time({
+tif <- fs::dir_ls( glob= "*.tif")
+stack <- rast(tif)
+site <- extract(stack, c(230.5,5))
+})
+nms <- names(site)
+x <- site |> unname() |> transpose() |> setNames(c("V1", "V2")) |> as_tibble() |> mutate(variable = nms, V1 = as.numeric(V1), V2 = as.numeric(V2))
+x <- x |> tidyr::separate(variable, into=c("variable", "height", "horizon"), sep=":")
+x <- x |> tidyr::separate(horizon, into=c("horizon", "ensemble"), sep=" fcst\\.?")
