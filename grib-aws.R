@@ -3,7 +3,7 @@ library(purrr)
 gefs <- function(
     horizon = "000", # 000:384 hrs ahead
     base = "https://noaa-gefs-pds.s3.amazonaws.com/",
-    date = "20220316",
+    date = "20220318",
     cycle = "00",    # 00, 06, 12, 18 hr issued
     series = "atmos",
     set = "pgrb2a", # or pgrb2b for less common vars
