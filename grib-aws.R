@@ -22,7 +22,6 @@ gefs <- function(
 ## every 6 hrs, 35 days out, all ensemble members
 horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
 ensemble <-  paste0("p", stringr::str_pad(1:31, 2, pad="0"))
-nrow(cases)
 cases <- expand.grid(horizon, ensemble) |> 
   setNames(c("horizon", "ensemble")) |>
   rowwise() |> 
