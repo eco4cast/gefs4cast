@@ -2,13 +2,13 @@ library(tidyverse)
 library(terra)
 library(processx)
 
-threads <- 140 # can probably be at least 140, maybe 280, depending on free RAM
+threads <- 140*8 # can probably be at least 140, maybe 280, depending on free RAM
 
 
 gefs <- function(
     horizon = "000", # 000:384 hrs ahead
     base = "https://noaa-gefs-pds.s3.amazonaws.com/",
-    date = "20220318",
+    date = "20220319",
     cycle = "00",    # 00, 06, 12, 18 hr issued
     series = "atmos",
     set = "pgrb2a", # or pgrb2b for less common vars
@@ -28,7 +28,7 @@ cases <- expand.grid(horizon, ensemble) |>
   mutate(url = gefs(horizon, NN=ensemble))
 src <- cases$url
 
-gdal <- paste("gdal_translate -of GTIFF -b 63 -b 64 -b 65 -b 66 -b 67 -b 68 -b 69 -b 70", src, paste0(basename(src), ".tif &"))
+gdal <- paste("gdal_translate -co compress=zstd -co predictor=2 -co tiled=yes -of GTIFF -b 63 -b 64 -b 65 -b 66 -b 67 -b 68 -b 69 -b 70", src, paste0(basename(src), ".tif &"))
 groups <- seq(1, length(src), by=threads)
 
 cmd <- ""
