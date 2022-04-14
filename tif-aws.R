@@ -30,8 +30,10 @@ bench::bench_time({
 
   # pivot
   nms <- names(site)
-  x <- site |> unname() |> transpose() |> setNames(c("site1", "site2")) |>
-    as_tibble() |> mutate(variable = nms, V1 = as.numeric(V1), V2 = as.numeric(V2))
+  x <- site |> unname() |> transpose() |>
+    setNames(c("site1", "site2")) |>
+    as_tibble() |> 
+    mutate(variable = nms, site1 = as.numeric(site1), site2 = as.numeric(site2))
   # split
   x <- x |> 
     tidyr::separate(variable, into=c("variable", "height", "horizon"), sep=":") |>
