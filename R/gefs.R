@@ -23,7 +23,7 @@ noaa_gefs <-
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns)
   
-  path = glue::glue("gefs.{date}/{date}-{cycle}.parquet")
+  path <- glue::glue("noaa/neon/gefs.{date}/{date}-{cycle}.parquet")
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
   
