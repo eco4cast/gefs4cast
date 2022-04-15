@@ -19,11 +19,12 @@ neon_coordinates <- function() {
 ## Reshape into EFI standard
 
 
-efi_format <- function(fc_by_site, ensemble_id, ns = neon_coordinates()) {
-  
+efi_format <- function(fc_by_site, ns = neon_coordinates()) {
   layer_names <- names(fc_by_site)
-  #n_ensembles <- length(layer_names) / length(unique(layer_names))
-  #ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
+ 
+  # should be more robust way to do this based on file names
+  n_ensembles <- length(layer_names) / length(unique(layer_names))
+  ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
   
   fc <- 
     fc_by_site |>
@@ -46,7 +47,7 @@ neon_extract <- function(dest, ns = neon_coordinates()) {
   tifs |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format(ensemble_id = ensemble_id, ns = ns)
+    efi_format(ns = ns)
   
 }
 

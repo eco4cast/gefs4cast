@@ -76,7 +76,7 @@ gdal_download <- function(src, dest = ".", threads) {
                 "-of GTIFF -b 63 -b 64 -b 65 -b 66 -b 69 -b 78 -b 79",
                 src, 
                 file.path(dest, paste0(basename(src), ".tif &")))
-  groups <- seq(1, length(src), by=threads)
+  groups <- c(seq(1, length(src), by=threads), length(src))
   cmd <- c("#!/bin/bash", "set -e")
   for(i in 1:(length(groups)-1)){
     cmd <- c(cmd, gdal[seq(groups[i],groups[i+1], by=1)], "wait")
