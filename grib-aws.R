@@ -5,6 +5,11 @@ library(terra)
 source("R/gefs.R")
 source("R/neon.R")
 
+
+x <- processx::run("gdalinfo", "--version")
+version <- gsub("GDAL (\\d\\.\\d\\.\\d), .*", "\\1", x$stdout)
+stopifnot(utils::compareVersion(version, "3.4.0"))
+
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
 dates <- seq(Sys.Date(), Sys.Date()-1, length.out=2)
 

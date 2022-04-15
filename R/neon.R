@@ -42,9 +42,7 @@ efi_format <- function(fc_by_site, ns = neon_coordinates()) {
 
 
 neon_extract <- function(dest, ns = neon_coordinates()) { 
-  tifs <- fs::dir_ls(dest, glob= "*.tif")
-  ensemble_id <- gsub(".*gep(\\d\\d).*", "\\1", tifs)
-  tifs |>
+  fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
     efi_format(ns = ns)
@@ -53,20 +51,21 @@ neon_extract <- function(dest, ns = neon_coordinates()) {
 
 
 ## Crop to neon area and write out as tif
-neon_tifs <- function(dest, ns = neon_coordinates(), n_ensemble=30) {
+neon_tifs <- function(cache, dest,  ns = neon_coordinates(), n_ensemble=30) {
   
   ext <- terra::ext(terra::vect(ns))
   ensemble <-  paste0("p", stringr::str_pad(1:n_ensemble, 2, pad="0"))
   
-  ## FIXME iterate over all NN
-  NN <- ensemble[[1]]
-  horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
-  rep <- map_chr(horizon, gefs_filename, NN=NN, extension = ".tif")
-  
-  rast(file.path(dest, rep)) |>
-    crop(ext) |> 
-    terra::writeRaster(glue("{dest}/{cycle}-{NN}.tif"), 
-                       gdal=c("COMPRESS=ZSTD", "TFW=YES")) # 43 MB
+  map(ensemble, 
+      function(NN) {
+        horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
+        rep <- map_chr(horizon, gefs_filename, NN=NN, extension = ".tif")
+        rast(file.path(cache, rep)) |>
+          crop(ext) |> 
+          terra::writeRaster(glue("{dest}/{cycle}-{NN}.tif"), 
+                             gdal=c("COMPRESS=ZSTD", "TFW=YES"),
+                             overwrite=TRUE) # 43 MB
+      })
   
 }
 

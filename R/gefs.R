@@ -15,7 +15,8 @@ noaa_gefs <-
            threads = 70,
            gdal_ops = "", # "-co compress=zstd"
            s3 = arrow::s3_bucket("drivers", 
-                                 endpoint_override = "data.ecoforecast.org")
+                                 endpoint_override = "data.ecoforecast.org"),
+           purge = TRUE
            ) {
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
@@ -30,7 +31,10 @@ noaa_gefs <-
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
   
-  fs::dir_delete(dest)
+  if (purge) { 
+    fs::dir_delete(dest)
+  }
+  
   invisible(p)
 }
 
