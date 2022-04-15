@@ -1,0 +1,71 @@
+# library(dplyr)
+# library(terra)
+# library(readr)
+# library(stringr)
+# library(purrr)
+# library(tibble)
+
+# NEON site longitude/latitudes
+neon_coordinates <- function() {
+  readr::read_csv(paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+                         "raw/master/noaa_download_site_list.csv")) |>
+    dplyr::select(longitude, latitude) |> as.matrix() |> terra::vect()
+}  
+
+
+## Reshape into EFI standard
+
+
+efi_format <- function(fc_by_site) {
+    
+  layer_names <- names(fc_by_site)
+  n_ensembles <- length(layer_names) / length(unique(layer_names))
+  ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
+  
+  fc <- 
+    fc_by_site |>
+    purrr::transpose() |>
+    stats::setNames(neon_sites$site_id) |>
+    tibble::as_tibble() |> 
+    tidyr::unnest(cols=everything()) |> 
+    dplyr::mutate(variable = layer_names, ensemble = ensemble_id) |>
+    dplyr::pivot_longer(-all_of(c("variable", "ensemble")), 
+                 names_to = "site_id", values_to = "predicted") |>
+    tidyr::separate(variable, 
+                    into=c("variable", "height", "horizon"), sep=":")
+  fc
+}
+
+
+neon_extract_df <- function(dest) { 
+  
+  ns <- neon_coordinates()
+  
+  fs::dir_ls(dest, glob= "*.tif") |>
+    terra::rast() |> 
+    terra::extract(ns) |> 
+    efi_format(fc_by_site)
+  
+}
+
+
+## Crop to neon area and write out as tif
+neon_tifs <- function(dest, n_ensemble=30) {
+  
+  ns <- neon_coordinates()
+  ext <- terra::ext(ns)
+  
+  ensemble <-  paste0("p", stringr::str_pad(1:n_ensemble, 2, pad="0"))
+  
+  ## FIXME iterate over all NN
+  NN <- ensemble[[1]]
+  horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
+  rep <- map_chr(horizon, gefs_filename, NN=NN, extension = ".tif")
+  
+  rast(file.path(dest, rep)) |>
+    crop(ext) |> 
+    terra::writeRaster(glue("{dest}/{cycle}-{NN}.tif"), 
+                       gdal=c("COMPRESS=ZSTD", "TFW=YES")) # 43 MB
+  
+}
+
