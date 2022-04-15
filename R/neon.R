@@ -37,7 +37,7 @@ efi_format <- function(fc_by_site) {
 }
 
 
-neon_extract_df <- function(dest) { 
+neon_extract <- function(dest) { 
   
   ns <- neon_coordinates()
   
