@@ -17,14 +17,14 @@ noaa_gefs <- function(date, cycle = "00", threads = 70,
   ns <- neon_coordinates()
   
   src <- gefs_forecast(date)
-  gdal_download(src, dest, threads)
+  p <- gdal_download(src, dest, threads)
   
   fc <- neon_extract(dest, ns = ns)
   
   arrow::write_parquet(fc, outfile, endpoint_override = endpoint)
   
   fs::dir_delete(dest)
-  invisible(outfile)
+  invisible(p)
 }
 
 
@@ -84,9 +84,9 @@ gdal_download <- function(src, dest = ".", threads) {
   shell <- "src.sh"
   cmd <- c(cmd, "wait", "echo 'Finshed!'")
   readr::write_lines(cmd, shell)
-  processx::run("bash", shell)
+  p <- processx::run("bash", shell)
   
   unlink(shell)
-  
+  invisible(p)
 }  
   
