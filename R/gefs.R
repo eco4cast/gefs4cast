@@ -14,10 +14,12 @@ noaa_gefs <- function(date, cycle = "00", threads = 70,
   
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
+  ns <- neon_coordinates()
   
   src <- gefs_forecast(date)
   gdal_download(src, dest, threads)
-  fc <- neon_extract(dest)
+  
+  fc <- neon_extract(dest, ns = ns)
   
   arrow::write_parquet(fc, outfile, endpoint_override = endpoint)
   

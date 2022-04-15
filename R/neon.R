@@ -8,17 +8,19 @@
 
 # NEON site longitude/latitudes
 neon_coordinates <- function() {
-  readr::read_csv(paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
-                         "raw/master/noaa_download_site_list.csv")) |>
-    dplyr::select(longitude, latitude) |> as.matrix() |> terra::vect()
+  sites <- readr::read_csv(paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+                         "raw/master/noaa_download_site_list.csv")) 
+  ns <- sites |> dplyr::select(longitude, latitude) |> as.matrix()
+  rownames(ns) <- sites$site_id
+  ns
 }  
 
 
 ## Reshape into EFI standard
 
 
-efi_format <- function(fc_by_site) {
-    
+efi_format <- function(fc_by_site, ns = neon_coordinates()) {
+  
   layer_names <- names(fc_by_site)
   n_ensembles <- length(layer_names) / length(unique(layer_names))
   ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
@@ -26,7 +28,7 @@ efi_format <- function(fc_by_site) {
   fc <- 
     fc_by_site |>
     purrr::transpose() |>
-    stats::setNames(neon_sites$site_id) |>
+    stats::setNames(rownames(ns)) |>
     tibble::as_tibble() |> 
     tidyr::unnest(cols=everything()) |> 
     dplyr::mutate(variable = layer_names, ensemble = ensemble_id) |>
@@ -38,24 +40,20 @@ efi_format <- function(fc_by_site) {
 }
 
 
-neon_extract <- function(dest) { 
-  
-  ns <- neon_coordinates()
+neon_extract <- function(dest, ns = neon_coordinates()) { 
   
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format()
+    efi_format(ns = ns)
   
 }
 
 
 ## Crop to neon area and write out as tif
-neon_tifs <- function(dest, n_ensemble=30) {
+neon_tifs <- function(dest, ns = neon_coordinates(), n_ensemble=30) {
   
-  ns <- neon_coordinates()
-  ext <- terra::ext(ns)
-  
+  ext <- terra::ext(terra::vect(ns))
   ensemble <-  paste0("p", stringr::str_pad(1:n_ensemble, 2, pad="0"))
   
   ## FIXME iterate over all NN
