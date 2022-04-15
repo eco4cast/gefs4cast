@@ -8,10 +8,11 @@
 
 
 
-noaa_gefs <- function(date, cycle = "00", threads = 70,
-                      outfile = glue::glue("s3://drivers/noaa/gefs.{date}/{date}-{cycle}.parquet"),
-                      endpoint = "data.ecoforecast.org") {
-  
+
+noaa_gefs <- 
+  function(date, cycle = "00", threads = 70,
+           fs = arrow::s3_bucket("drivers", endpoint = "data.ecoforecast.org")
+           ) {
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
   ns <- neon_coordinates()
@@ -21,7 +22,9 @@ noaa_gefs <- function(date, cycle = "00", threads = 70,
   
   fc <- neon_extract(dest, ns = ns)
   
-  arrow::write_parquet(fc, outfile, endpoint_override = endpoint)
+  path = glue::glue("gefs.{date}/{date}-{cycle}.parquet")
+  outfile <- s3$path(path)
+  arrow::write_parquet(fc, outfile)
   
   fs::dir_delete(dest)
   invisible(p)
