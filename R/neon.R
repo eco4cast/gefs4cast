@@ -4,6 +4,7 @@
 # library(stringr)
 # library(purrr)
 # library(tibble)
+# library(tidyr)
 
 # NEON site longitude/latitudes
 neon_coordinates <- function() {
@@ -29,7 +30,7 @@ efi_format <- function(fc_by_site) {
     tibble::as_tibble() |> 
     tidyr::unnest(cols=everything()) |> 
     dplyr::mutate(variable = layer_names, ensemble = ensemble_id) |>
-    dplyr::pivot_longer(-all_of(c("variable", "ensemble")), 
+    tidyr::pivot_longer(-all_of(c("variable", "ensemble")), 
                  names_to = "site_id", values_to = "predicted") |>
     tidyr::separate(variable, 
                     into=c("variable", "height", "horizon"), sep=":")
