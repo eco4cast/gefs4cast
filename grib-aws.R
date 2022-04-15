@@ -40,12 +40,45 @@ readr::write_lines(cmd, "src.sh")
 bench::bench_time(processx::run("bash", "src.sh"))
 
 
-bench::bench_time({
+# NEON site longitude/latitudes
+neon_sites <- readr::read_csv("https://github.com/eco4cast/neon4cast-noaa-download/raw/master/noaa_download_site_list.csv")
+ns <- neon_sites |> select(longitude, latitude) |> as.matrix()
+rownames(ns) <- neon_sites$site_id
+ext <- terra::ext(terra::vect(ns))
+
 tif <- fs::dir_ls( glob= "*.tif")
 stack <- rast(tif)
-site <- extract(stack, c(230.5,5))
-})
-nms <- names(site)
-x <- site |> unname() |> transpose() |> setNames(c("V1", "V2")) |> as_tibble() |> mutate(variable = nms, V1 = as.numeric(V1), V2 = as.numeric(V2))
-x <- x |> tidyr::separate(variable, into=c("variable", "height", "horizon"), sep=":")
-x <- x |> tidyr::separate(horizon, into=c("horizon", "ensemble"), sep=" fcst\\.?")
+site <- extract(stack, ns)
+
+## Reshape into EFI standard
+layer_names <- names(site)
+n_ensembles <- length(layer_names) / length(unique(layer_names))
+ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
+
+fc <- 
+  site |> transpose() |> setNames(neon_sites$site_id) |>  as_tibble() |> 
+  unnest(cols=everything()) |> mutate(variable = layer_names, ensemble = ensemble_id) |>
+  pivot_longer(-all_of(c("variable", "ensemble")), names_to = "site_id", values_to = "predicted") |>
+  tidyr::separate(variable, into=c("variable", "height", "horizon"), sep=":")
+
+# optionally, add NEON lat/lon back?
+# fc <- left_join(fc, neon_sites)
+date <- "20220314"
+cycle <- "00"
+outfile <- glue::glue("noaa-gefs-{date}-{cycle}.csv.gz")
+write_csv(fc, outfile)
+
+## parquet is much faster to write and about half the size
+outfile <- glue::glue("noaa-gefs-{date}-{cycle}.parquet")
+arrow::write_parquet(fc, outfile)
+
+## spatial operations: too many files
+#stack2 <- stack |> crop(ext) 
+#terra::writeCDF(stack, "stack.ncdf")
+#terra::writeRaster(stack, "stack.tif", gdal=c("COMPRESS=ZSTD", "TFW=YES"))
+
+
+
+
+
+
