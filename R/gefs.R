@@ -19,7 +19,7 @@ noaa_gefs <-
            ) {
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
-  nice_date <- as.character(as.Date(date, "%Y%m%d"))
+  nice_date <- as.Date(date, "%Y%m%d")
   
   src <- gefs_forecast(date)
   p <- gdal_download(src, dest, threads, gdal_ops)
