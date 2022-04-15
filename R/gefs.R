@@ -13,20 +13,20 @@ noaa_gefs <-
   function(date, 
            cycle = "00", 
            threads = 70,
-           gdal_ops = "-co compress=zstd",
+           gdal_ops = "", # "-co compress=zstd"
            s3 = arrow::s3_bucket("drivers", 
                                  endpoint_override = "data.ecoforecast.org")
            ) {
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
+  nice_date <- as.character(as.Date(date, "%Y%m%d"))
   
   src <- gefs_forecast(date)
   p <- gdal_download(src, dest, threads, gdal_ops)
   
   ns <- neon_coordinates()
-  fc <- neon_extract(dest, ns = ns)
-  
-  path <- glue::glue("noaa/neon/gefs.{date}/{date}-{cycle}.parquet")
+  fc <- neon_extract(dest, ns = ns) |> mutate(start_time = nice_date)
+  path <- glue::glue("noaa/neon/gefs/{nice_date}/{date}-{cycle}.parquet")
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
   
