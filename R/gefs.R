@@ -5,21 +5,22 @@
 # library(dplyr)
 # library(readr)
 # library(stats)
-
+# library(arrow)
 
 
 
 noaa_gefs <- 
   function(date, cycle = "00", threads = 70,
-           fs = arrow::s3_bucket("drivers", endpoint = "data.ecoforecast.org")
+           s3 = arrow::s3_bucket("drivers", 
+                                 endpoint_override = "data.ecoforecast.org")
            ) {
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
-  ns <- neon_coordinates()
   
   src <- gefs_forecast(date)
   p <- gdal_download(src, dest, threads)
   
+  ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns)
   
   path = glue::glue("gefs.{date}/{date}-{cycle}.parquet")
