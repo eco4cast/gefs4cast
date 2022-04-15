@@ -10,7 +10,10 @@
 
 
 noaa_gefs <- 
-  function(date, cycle = "00", threads = 70,
+  function(date, 
+           cycle = "00", 
+           threads = 70,
+           gdal_ops = "-co compress=zstd",
            s3 = arrow::s3_bucket("drivers", 
                                  endpoint_override = "data.ecoforecast.org")
            ) {
@@ -18,7 +21,7 @@ noaa_gefs <-
   dest <- fs::dir_create(glue("gefs.{date}"))
   
   src <- gefs_forecast(date)
-  p <- gdal_download(src, dest, threads)
+  p <- gdal_download(src, dest, threads, gdal_ops)
   
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns)
@@ -75,8 +78,13 @@ gefs_forecast <- function(date = "20220314",
 # For info mapping band id numbers to descriptions, see 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/gep01.t00z.pgrb2a.0p50.f003.shtml
 # could easily generalize this to take compression and output format as options
-gdal_download <- function(src, dest = ".", threads) {
-  gdal <- paste("gdal_translate", "-co compress=zstd",
+gdal_download <- function(src, 
+                          dest = ".", 
+                          threads=70, 
+                          gdal_ops = "-co compress=zstd"
+                          ) {
+  gdal <- paste("gdal_translate", 
+                gdal_ops,
                 "-of GTIFF -b 63 -b 64 -b 65 -b 66 -b 69 -b 78 -b 79",
                 src, 
                 file.path(dest, paste0(basename(src), ".tif &")))
