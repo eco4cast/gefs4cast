@@ -6,25 +6,30 @@ source("R/gefs.R")
 source("R/neon.R")
 
 
-Sys.unsetenv("AWS_DEFAULT_REGION")
-Sys.unsetenv("AWS_S3_ENDPOINT")
-
-
-x <- processx::run("gdalinfo", "--version")
-version <- gsub("GDAL (\\d\\.\\d\\.\\d), .*", "\\1", x$stdout)
-stopifnot(utils::compareVersion(version, "3.4.0") >=0 )
-
+# Set desired dates and threads
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
+threads <- 140
 dates <- seq(Sys.Date(), Sys.Date()-1, length.out=2)
 
+
+# Set upload destiation
+Sys.unsetenv("AWS_DEFAULT_REGION")
+Sys.unsetenv("AWS_S3_ENDPOINT")
 # s3 <- arrow::s3_bucket("drivers", endpoint_override =  "minio.thelio.carlboettiger.info")
 s3 <- arrow::s3_bucket("drivers", endpoint_override =  "data.ecoforecast.org")
 
+
+# Here we go
 bench::bench_time({
-map(dates, noaa_gefs, cycle="00", threads=560, s3=s3, gdal_ops="")
+map(dates, noaa_gefs, cycle="00", threads=280, s3=s3, gdal_ops="")
 })
 
+
+# confirm data access
 s3$ls("noaa/neon/gefs")
 path <- s3$path("noaa/neon/gefs")
 df <- arrow::open_dataset(path)
 df |> filter(start_time > as.Date("2022-04-14")) |> collect()
+
+
+

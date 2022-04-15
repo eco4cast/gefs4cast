@@ -18,6 +18,9 @@ noaa_gefs <-
                                  endpoint_override = "data.ecoforecast.org"),
            purge = TRUE
            ) {
+    
+    
+  assert_gdal()  
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
@@ -105,4 +108,12 @@ gdal_download <- function(src,
   unlink(shell)
   invisible(p)
 }  
+
+
+assert_gdal <- function() {
+  x <- processx::run("gdalinfo", "--version")
+  version <- gsub("GDAL (\\d\\.\\d\\.\\d), .*", "\\1", x$stdout)
+  stopifnot(utils::compareVersion(version, "3.4.0") >=0 )
+}
+
   
