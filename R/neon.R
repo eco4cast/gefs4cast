@@ -44,7 +44,7 @@ neon_extract <- function(dest) {
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format(fc_by_site)
+    efi_format()
   
 }
 

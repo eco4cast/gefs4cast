@@ -82,9 +82,9 @@ gdal_download <- function(src, dest = ".", threads) {
   shell <- "src.sh"
   cmd <- c(cmd, "wait", "echo 'Finshed!'")
   readr::write_lines(cmd, shell)
-  timing <- bench::bench_time(processx::run("bash", shell))
+  processx::run("bash", shell)
   
   unlink(shell)
-  timing
+  
 }  
   
