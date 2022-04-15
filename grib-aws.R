@@ -1,6 +1,7 @@
 library(tidyverse)
-library(terra)
 library(processx)
+library(glue)
+library(terra)
 
 threads <- 140 # can probably be at least 140, maybe 280, depending on free RAM
 
@@ -72,13 +73,30 @@ write_csv(fc, outfile)
 outfile <- glue::glue("noaa-gefs-{date}-{cycle}.parquet")
 arrow::write_parquet(fc, outfile)
 
-## spatial operations: too many files
-#stack2 <- stack |> crop(ext) 
-#terra::writeCDF(stack, "stack.ncdf")
-#terra::writeRaster(stack, "stack.tif", gdal=c("COMPRESS=ZSTD", "TFW=YES"))
 
 
+## spatial operations: too many file connections to process all ensembles in one pass
 
+gefs_filename <- function(
+    horizon = "000", # 000:384 hrs ahead
+    date = "20220314",
+    cycle = "00",    # 00, 06, 12, 18 hr issued
+    set = "pgrb2a", # or pgrb2b for less common vars
+    NN = "p01", # p01-p20 replicates, or  "avg"
+    res = "0p50" # half 0.50 degree resolution
+) {
+  glue::glue("ge{NN}.t{cycle}z.{set}.{res}.f{horizon}.tif")
+}
+horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
 
+fs::dir_create(date)
+NN = "p01"
+rep <- map_chr(horizon, gefs_filename, NN=NN)
+stack_rep <- rast(rep)
 
+stack2 <- stack_rep |> crop(ext) 
+stack_rep |> crop(ext) |> terra::writeCDF(glue("{date}/{cycle}-{NN}.nc"), overwrite=TRUE) # 72 MB
+stack_rep |> crop(ext) |> terra::writeRaster(glue("{date}/{cycle}-{NN}.tif"), gdal=c("COMPRESS=ZSTD", "TFW=YES")) # 43 MB
+
+fs::dir_info(date)
 
