@@ -50,22 +50,19 @@ neon_extract <- function(dest, ns = neon_coordinates()) {
 }
 
 
-## Crop to neon area and write out as tif
-neon_tifs <- function(cache, dest,  ns = neon_coordinates(), n_ensemble=30) {
-  
+## Crop to neon area and write back out
+neon_tifs <- function(dest,  ns = neon_coordinates()) {
   ext <- terra::ext(terra::vect(ns))
-  ensemble <-  paste0("p", stringr::str_pad(1:n_ensemble, 2, pad="0"))
   
-  map(ensemble, 
-      function(NN) {
-        horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
-        rep <- map_chr(horizon, gefs_filename, NN=NN, extension = ".tif")
-        rast(file.path(cache, rep)) |>
-          crop(ext) |> 
-          terra::writeRaster(glue("{dest}/{cycle}-{NN}.tif"), 
-                             gdal=c("COMPRESS=ZSTD", "TFW=YES"),
-                             overwrite=TRUE) # 43 MB
-      })
+  fs::dir_ls(dest, glob= "*.tif") |> 
+    map(function(tif){
+      rast(tif) |> crop(ext) |> 
+        terra::writeRaster(tif, 
+                           gdal=c("COMPRESS=ZSTD", "TFW=YES"),
+                           overwrite=TRUE)
+      
+      
+    })
   
 }
 

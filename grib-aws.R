@@ -36,3 +36,10 @@ df |> filter(start_time > as.Date("2022-04-14")) |> collect()
 
 
 
+## crop tifs
+date <- dates[[1]]
+dest <- fs::dir_create(glue("gefs.{date}"))
+src <- gefs_forecast(date)
+p <- gdal_download(src, dest, threads=1000, gdal_ops="")
+
+neon_tifs(dest)
