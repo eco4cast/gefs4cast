@@ -101,7 +101,8 @@ gdal_download <- function(src,
                           ) {
   gdal <- paste("gdal_translate", 
                 gdal_ops,
-                "-of GTIFF -b 63 -b 64 -b 65 -b 66 -b 69 -b 78 -b 79",
+                # THIS NEEDS TO BE ONLY -b 57 -b 63 -b 64 -b 67 -b 68 for 000 forecast
+                "-of GTIFF -b 57 -b 63 -b 64 -b 67 -b 68 -b 69 -b 78 -b 79",
                 src, 
                 file.path(dest, paste0(basename(src), ".tif &")))
   groups <- c(seq(1, length(src), by=threads), length(src))
