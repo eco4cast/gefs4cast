@@ -7,8 +7,6 @@
 # library(stats)
 # library(arrow)
 
-
-
 noaa_gefs <- 
   function(date, 
            cycle = "00", 
@@ -42,9 +40,9 @@ noaa_gefs <-
 }
 
 
-gefs_filename <- function(horizon, cycle = "00", set = "pgrb2a", NN = "p01",
+gefs_filename <- function(horizon, cycle = "00", set = "pgrb2a", NN = "gep01",
                           res = "0p50",   extension = "") {
-  glue::glue("ge{NN}.t{cycle}z.{set}.{res}.f{horizon}{extension}")
+  glue::glue("{NN}.t{cycle}z.{set}.{res}.f{horizon}{extension}")
 }
 
 
@@ -54,7 +52,7 @@ gefs_url <- function(
     cycle = "00",    # 00, 06, 12, 18 hr issued
     series = "atmos",
     set = "pgrb2a", # or pgrb2b for less common vars
-    NN = "p01", # p01-p20 replicates, or  "avg"
+    NN = "gep01", # p01-p20 replicates, or  "avg"
     res = "0p50", # half 0.50 degree resolution
     base = "https://noaa-gefs-pds.s3.amazonaws.com/"
 ) {
@@ -69,13 +67,24 @@ gefs_forecast <- function(date = "20220314",
                           series = "atmos",
                           set = "pgrb2a", # or pgrb2b for less common vars
                           res = "0p50", # half 0.50 degree resolution,
-                          n_ensemble = 30,
+                          n_ensemble = 31,
                           base = "https://noaa-gefs-pds.s3.amazonaws.com/"
 ) {
-  horizon <- stringr::str_pad(seq(6,840,by=6), 3, pad="0")
-  ensemble <-  paste0("p", stringr::str_pad(1:n_ensemble, 2, pad="0"))
+  horizon1 <- stringr::str_pad(seq(3,340,by=3), 3, pad="0")
+  if(cycle == "00"){
+    horizon2 <- stringr::str_pad(seq(346,840,by=6), 3, pad="0")
+  }else{
+    horizon2 <- stringr::str_pad(seq(86,384,by=6), 3, pad="0")
+  }
+  horizon <- c(horizon1, horizon2)
+
+  ensemble <-  paste0("gep", stringr::str_pad(1:n_ensemble, 2, pad="0"))
+  if(n_ensemble == 31){
+    ensemble <- c("gec00", ensemble)
+  }
   cases <- expand.grid(horizon, ensemble) |> 
     stats::setNames(c("horizon", "ensemble")) |>
+    dplyr::filter(!(ensemble == "gec00" & as.numeric(as.character(horizon)) > 384)) |>
     dplyr::rowwise() |> 
     dplyr::mutate(url = gefs_url(horizon, NN=ensemble))
   cases$url
