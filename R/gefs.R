@@ -27,7 +27,7 @@ noaa_gefs <-
   p <- gdal_download(src, dest, threads, gdal_ops)
   
   ns <- neon_coordinates()
-  fc <- neon_extract(dest, ns = ns) |> mutate(start_time = nice_date)
+  fc <- neon_extract(dest, ns = ns) |> mutate(start_time = paste0(nice_date, " ",cycle,":00:00"))
   path <- glue::glue("noaa/neon/gefs/{nice_date}/{date}-{cycle}.parquet")
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
