@@ -23,8 +23,8 @@ noaa_gefs <-
   dest <- fs::dir_create(glue("gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
   
-  src <- gefs_forecast(date)
-  p <- gdal_download(src, dest, threads, gdal_ops)
+  url_vars <- gefs_forecast(date)
+  p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
   
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns) |> mutate(start_time = paste0(nice_date, " ",cycle,":00:00"))
@@ -67,27 +67,32 @@ gefs_forecast <- function(date = "20220314",
                           series = "atmos",
                           set = "pgrb2a", # or pgrb2b for less common vars
                           res = "0p50", # half 0.50 degree resolution,
-                          n_ensemble = 31,
+                          n_ensemble = 30,
+                          ens_avg = FALSE,
+                          max_horizon = 840,
                           base = "https://noaa-gefs-pds.s3.amazonaws.com/"
 ) {
-  horizon1 <- stringr::str_pad(seq(3,340,by=3), 3, pad="0")
-  if(cycle == "00"){
-    horizon2 <- stringr::str_pad(seq(346,840,by=6), 3, pad="0")
-  }else{
-    horizon2 <- stringr::str_pad(seq(86,384,by=6), 3, pad="0")
-  }
+  horizon1 <- stringr::str_pad(seq(0,340,by=3), 3, pad="0")
+  horizon2 <- stringr::str_pad(seq(346,840,by=6), 3, pad="0")
   horizon <- c(horizon1, horizon2)
 
   ensemble <-  paste0("gep", stringr::str_pad(1:n_ensemble, 2, pad="0"))
-  if(n_ensemble == 31){
-    ensemble <- c("gec00", ensemble)
-  }
-  cases <- expand.grid(horizon, ensemble) |> 
-    stats::setNames(c("horizon", "ensemble")) |>
+  ensemble <- c("geavg","gec00", ensemble)
+  
+  cases <- expand.grid(horizon, ensemble, cycle, date) |> 
+    stats::setNames(c("horizon", "ensemble", "cycle", "date")) |>
     dplyr::filter(!(ensemble == "gec00" & as.numeric(as.character(horizon)) > 384)) |>
+    dplyr::filter(!(cycle != "00" & as.numeric(as.character(horizon)) > 384)) |> 
+    dplyr::filter(as.numeric(as.character(horizon)) <= max_horizon) |> 
+    dplyr::mutate(vars = ifelse(horizon != "000",
+                                "-b 57 -b 63 -b 64 -b 67 -b 68 -b 69 -b 78 -b 79",
+                                "-b 57 -b 63 -b 64 -b 67 -b 68")) |> 
+    dplyr::mutate(ens_avg = ens_avg) |> 
+    dplyr::filter((ens_avg == TRUE & ensemble == "geavg") | (ens_avg == FALSE & ensemble != "geavg")) |> 
     dplyr::rowwise() |> 
-    dplyr::mutate(url = gefs_url(horizon, NN=ensemble))
-  cases$url
+    dplyr::mutate(url = gefs_url(horizon, date, NN=ensemble, cycle)) |> 
+    dplyr::select(url, vars)
+  cases
 }
   
 
@@ -95,14 +100,15 @@ gefs_forecast <- function(date = "20220314",
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/gep01.t00z.pgrb2a.0p50.f003.shtml
 # could easily generalize this to take compression and output format as options
 gdal_download <- function(src, 
+                          vars,
                           dest = ".", 
                           threads=70, 
                           gdal_ops = "-co compress=zstd"
                           ) {
   gdal <- paste("gdal_translate", 
                 gdal_ops,
-                # THIS NEEDS TO BE ONLY -b 57 -b 63 -b 64 -b 67 -b 68 for 000 forecast
-                "-of GTIFF -b 57 -b 63 -b 64 -b 67 -b 68 -b 69 -b 78 -b 79",
+                "-of GTIFF",
+                vars,
                 src, 
                 file.path(dest, paste0(basename(src), ".tif &")))
   groups <- c(seq(1, length(src), by=threads), length(src))
