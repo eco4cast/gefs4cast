@@ -13,11 +13,12 @@ days <- 30
 dates <- seq(Sys.Date(), Sys.Date()-days, length.out=days+1)
 
 
-# Set upload destiation
+# Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
 Sys.unsetenv("AWS_S3_ENDPOINT")
-# s3 <- arrow::s3_bucket("drivers", endpoint_override =  "minio.thelio.carlboettiger.info")
-s3 <- arrow::s3_bucket("drivers", endpoint_override =  "data.ecoforecast.org")
+endpoint <- "minio.thelio.carlboettiger.info"
+endpoint <-  "data.ecoforecast.org"
+s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 
 # Here we go
@@ -26,8 +27,10 @@ map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
 })
 
 
+
+
 # confirm data access
-s3 <- arrow::s3_bucket("drivers", endpoint_override =  "data.ecoforecast.org")
+s3 <- arrow::s3_bucket("drivers", endpoint_override =  endpoint)
 
 s3$ls("noaa/neon/gefs")
 path <- s3$path("noaa/neon/gefs")

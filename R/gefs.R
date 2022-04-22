@@ -21,13 +21,14 @@ noaa_gefs <-
   assert_gdal()  
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
-  nice_date <- as.Date(date, "%Y%m%d")
+  start_time <- paste0(as.Date(date, "%Y%m%d"), " ",cycle,":00:00")
   
   url_vars <- gefs_forecast(date)
   p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
   
   ns <- neon_coordinates()
-  fc <- neon_extract(dest, ns = ns) |> mutate(start_time = paste0(nice_date, " ",cycle,":00:00"))
+  fc <- neon_extract(dest, ns = ns) |> 
+    dplyr::mutate(start_time = start_time)
   path <- glue::glue("noaa/neon/gefs/{nice_date}/{date}-{cycle}.parquet")
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
@@ -72,8 +73,8 @@ gefs_forecast <- function(date = "20220314",
                           max_horizon = 840,
                           base = "https://noaa-gefs-pds.s3.amazonaws.com/"
 ) {
-  horizon1 <- stringr::str_pad(seq(0,340,by=3), 3, pad="0")
-  horizon2 <- stringr::str_pad(seq(346,840,by=6), 3, pad="0")
+  horizon1 <- stringr::str_pad(seq(0,240,by=3), 3, pad="0")
+  horizon2 <- stringr::str_pad(seq(240,840,by=6), 3, pad="0")
   horizon <- c(horizon1, horizon2)
 
   ensemble <-  paste0("gep", stringr::str_pad(1:n_ensemble, 2, pad="0"))
