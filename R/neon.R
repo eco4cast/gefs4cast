@@ -19,36 +19,55 @@ neon_coordinates <- function() {
 ## Reshape into EFI standard
 
 
-efi_format <- function(fc_by_site, ns = neon_coordinates()) {
-  layer_names <- names(fc_by_site)
- 
-  # should be more robust way to do this based on file names
-  n_ensembles <- length(layer_names) / length(unique(layer_names))
-  ensemble_id <- rep(1:n_ensembles, each = length(unique(layer_names)))
-  
-  fc <- 
-    fc_by_site |>
-    purrr::transpose() |>
-    stats::setNames(rownames(ns)) |>
-    tibble::as_tibble() |> 
-    tidyr::unnest(cols=everything()) |> 
-    dplyr::mutate(variable = layer_names, ensemble = ensemble_id) |>
-    tidyr::pivot_longer(-all_of(c("variable", "ensemble")), 
-                 names_to = "site_id", values_to = "predicted") |>
-    tidyr::separate(variable, 
-                    into=c("variable", "height", "horizon"), sep=":")
-  fc
-}
-
-
-neon_extract <- function(dest, ns = neon_coordinates()) { 
+neon_extract <- function(dest, ns = neon_coordinates(), start_time) { 
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format(ns = ns)
+    efi_format(ns = ns, start_time = start_time)
   
 }
 
+
+efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
+  
+  ## Parse layer name information
+  layer_names <- names(fc_by_site)
+  layers <- tibble::tibble(L = layer_names) |> 
+    tibble::rowid_to_column() |> 
+    arrange(L)
+  
+  ensemble <-  layers |> 
+    dplyr::count(L) |> 
+    dplyr::rowwise() |> 
+    dplyr::mutate(layers = paste(L, 1:n, sep=":", collapse = ",")) |>
+    tidyr::separate_rows(layers, sep=",") |>  
+    dplyr::mutate(ensemble = stringi::stri_extract(layers, regex="\\d+$")) |>
+    arrange(L, ensemble)|> 
+    bind_cols(select(layers,-L)) |> 
+    arrange(rowid)
+  
+  stopifnot( identical(ensemble$L, names(fc_by_site)) )
+  
+  rownames(fc_by_site) <- rownames(ns)
+  names(fc_by_site) <- ensemble$layers
+  
+  fc <- 
+    fc_by_site |> 
+    tibble::rownames_to_column(var = "site_id") |>
+    tidyr::pivot_longer(-site_id, names_to="variable", values_to="predicted") |>
+    tidyr::separate(variable, into=c("variable", "height", "horizon", "ensemble"),
+                    sep=":", remove = FALSE) |> 
+    dplyr::mutate(ensemble = as.integer(ensemble),
+                  start_time = start_time,
+                  time = start_time + get_hour(horizon))
+  
+  fc
+}
+
+get_hour <- function(horizon) {
+  x <- stringi::stri_extract(horizon, regex="^\\d+")
+  lubridate::hours(as.integer(x))
+}
 
 ## Crop to neon area and write back out
 neon_tifs <- function(dest,  ns = neon_coordinates()) {
