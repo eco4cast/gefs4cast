@@ -30,9 +30,6 @@ neon_extract <- function(dest, ns = neon_coordinates(), start_time) {
 
 efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
   
-  tifs <- fs::dir_ls(dest, glob= "*.tif")
-  fc_by_site <- terra::rast(tifs) |> terra::extract(ns)
-  
   ## Parse layer name information
   layer_names <- names(fc_by_site)
   layers <- tibble::tibble(L = layer_names) |> 

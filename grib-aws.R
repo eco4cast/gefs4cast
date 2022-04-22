@@ -20,6 +20,9 @@ endpoint <- "minio.thelio.carlboettiger.info"
 endpoint <-  "data.ecoforecast.org"
 s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
+# or locally
+# s3 <- arrow::SubTreeFileSystem$create("~/tempdir")
+
 
 # Here we go
 bench::bench_time({
