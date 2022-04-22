@@ -8,10 +8,9 @@ source("R/neon.R")
 
 # Set desired dates and threads
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
-threads <- 1120
+threads <- 560
 days <- 40
 dates <- seq(Sys.Date(), Sys.Date()-days, length.out=days+1)
-dates <- as.Date(c("2022-02-14", "2022-02-13"))
 
 # Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
@@ -43,9 +42,9 @@ df |> filter(start_time > as.Date("2022-04-14")) |> collect()
 
 
 ## crop tifs
-date <- dates[[1]]
-dest <- fs::dir_create(glue("gefs.{date}"))
-src <- gefs_forecast(date)
-p <- gdal_download(src, dest, threads=1000, gdal_ops="")
+#date <- dates[[1]]
+#dest <- fs::dir_create(glue("gefs.{date}"))
+#src <- gefs_forecast(date)
+#p <- gdal_download(src, dest, threads=1000, gdal_ops="")
 
-neon_tifs(dest)
+#neon_tifs(dest)

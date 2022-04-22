@@ -8,8 +8,11 @@
 
 # NEON site longitude/latitudes
 neon_coordinates <- function() {
-  sites <- readr::read_csv(paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
-                         "raw/master/noaa_download_site_list.csv"), show_col_types = FALSE) 
+  sites <- readr::read_csv(
+    paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+           "raw/master/noaa_download_site_list.csv"),
+    show_col_types = FALSE,
+    progress = FALSE) 
   ns <- sites |> dplyr::select(longitude, latitude) |> as.matrix()
   rownames(ns) <- sites$site_id
   ns
