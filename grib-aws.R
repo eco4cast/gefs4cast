@@ -8,10 +8,10 @@ source("R/neon.R")
 
 # Set desired dates and threads
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
-threads <- 140
-days <- 30
+threads <- 1120
+days <- 40
 dates <- seq(Sys.Date(), Sys.Date()-days, length.out=days+1)
-
+dates <- as.Date(c("2022-02-14", "2022-02-13"))
 
 # Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
@@ -26,7 +26,7 @@ s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 # Here we go
 bench::bench_time({
-  map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
+  status <- map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
 })
 
 

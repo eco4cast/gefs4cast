@@ -21,8 +21,8 @@ noaa_gefs <-
   assert_gdal()  
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
-  start_time <- lubridate::as_datetime(
-    paste0(as.Date(date, "%Y%m%d"), " ",cycle,":00:00"))
+  nice_date <- as.Date(date, "%Y%m%d")
+  start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
   url_vars <- gefs_forecast(date)
   p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
