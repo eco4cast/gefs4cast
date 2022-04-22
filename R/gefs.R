@@ -17,6 +17,7 @@ noaa_gefs <-
            purge = TRUE
            ) {
     
+  if(date < lubridate::as_date("2020-09-25")) stop("Dates earlier than 2020-09-25 are not currently supported")
     
   assert_gdal()  
   date <- format(date, "%Y%m%d")
