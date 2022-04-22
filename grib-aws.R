@@ -23,7 +23,7 @@ s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 # Here we go
 bench::bench_time({
-map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
+  map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
 })
 
 

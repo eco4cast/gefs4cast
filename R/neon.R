@@ -19,16 +19,16 @@ neon_coordinates <- function() {
 ## Reshape into EFI standard
 
 
-neon_extract <- function(dest, ns = neon_coordinates()) { 
+neon_extract <- function(dest, ns = neon_coordinates(), start_time) { 
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format(ns = ns)
+    efi_format(ns = ns, start_time = start_time)
   
 }
 
 
-efi_format <- function(fc_by_site, ns = neon_coordinates()) {
+efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
   
   tifs <- fs::dir_ls(dest, glob= "*.tif")
   fc_by_site <- terra::rast(tifs) |> terra::extract(ns)
@@ -61,6 +61,7 @@ efi_format <- function(fc_by_site, ns = neon_coordinates()) {
     tidyr::separate(variable, into=c("variable", "height", "horizon", "ensemble"),
                     sep=":", remove = FALSE) |> 
     dplyr::mutate(ensemble = as.integer(ensemble),
+                  start_time = start_time,
                   time = start_time + get_hour(horizon))
   
   fc
