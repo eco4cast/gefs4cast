@@ -72,15 +72,15 @@ gefs_forecast <- function(date = "20220314",
                           max_horizon = 840,
                           base = "https://noaa-gefs-pds.s3.amazonaws.com/"
 ) {
-  horizon1 <- stringr::str_pad(seq(0,340,by=3), 3, pad="0")
-  horizon2 <- stringr::str_pad(seq(346,840,by=6), 3, pad="0")
+  horizon1 <- stringr::str_pad(seq(0,240,by=3), 3, pad="0")
+  horizon2 <- stringr::str_pad(seq(246,840,by=6), 3, pad="0")
   horizon <- c(horizon1, horizon2)
 
   ensemble <-  paste0("gep", stringr::str_pad(1:n_ensemble, 2, pad="0"))
   ensemble <- c("geavg","gec00", ensemble)
   
-  cases <- expand.grid(horizon, ensemble, cycle, date) |> 
-    stats::setNames(c("horizon", "ensemble", "cycle", "date")) |>
+  cases <- expand.grid(horizon, ensemble) |> 
+    stats::setNames(c("horizon", "ensemble")) |>
     dplyr::filter(!(ensemble == "gec00" & as.numeric(as.character(horizon)) > 384)) |>
     dplyr::filter(!(cycle != "00" & as.numeric(as.character(horizon)) > 384)) |> 
     dplyr::filter(as.numeric(as.character(horizon)) <= max_horizon) |> 
