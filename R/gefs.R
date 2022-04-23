@@ -25,7 +25,7 @@ noaa_gefs <-
   nice_date <- as.Date(date, "%Y%m%d")
   start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
-  url_vars <- gefs_forecast(date)
+  url_vars <- gefs_forecast(date, cycle=cycle)
   p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns, start_time)

@@ -62,7 +62,9 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
                     sep=":", remove = FALSE) |> 
     dplyr::mutate(ensemble = as.integer(ensemble),
                   start_time = start_time,
-                  time = start_time + get_hour(horizon))
+                  forecast_valid = horizon,
+                  horizon = get_hour(horizon),
+                  time = start_time + horizon)
   
   fc
 }
