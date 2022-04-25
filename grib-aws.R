@@ -50,7 +50,7 @@ df |> filter(start_time == as.Date("2022-04-20"))
 
 
 
-s3$ls("noaa/neon/gefs/2022-04-20")
+#s3$ls("noaa/neon/gefs/2022-04-20")
 ## crop tifs
 #date <- dates[[1]]
 #dest <- fs::dir_create(glue("gefs.{date}"))
