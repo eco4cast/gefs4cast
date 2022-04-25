@@ -64,7 +64,10 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
                   start_time = start_time,
                   forecast_valid = horizon,
                   horizon = get_hour(horizon),
-                  time = start_time + horizon)
+                  time = start_time + horizon,
+                  horizon = as.numeric(horizon, "hours")) |>
+    left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
+              by = "site_id")
   
   fc
 }

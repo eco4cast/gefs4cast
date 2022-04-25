@@ -8,9 +8,11 @@ source("R/neon.R")
 
 # Set desired dates and threads
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
-threads <- 280
-days <- 10
-dates <- seq(Sys.Date(), Sys.Date()-days, length.out=days+1)
+threads <- 500
+days <- 3
+end <- as.Date("2022-04-20") #Sys.Date()-1
+start <- end - days
+dates <- seq(start, end, length.out=(days+1))
 
 # Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
@@ -21,15 +23,20 @@ s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 # or locally
 # s3 <- arrow::SubTreeFileSystem$create("~/tempdir")
-
+cycle <- c("06", "12", "18")
+max_horizon=6
+#cycle <- "00"
 # Here we go
 bench::bench_time({
-  walk(c("06", "12", "18"), function(cy)
-    map(dates, noaa_gefs, cycle=cy, threads=threads, s3=s3, gdal_ops="")
+  walk(cycle, function(cy)
+    map(dates, noaa_gefs, cycle=cy, max_horizon=6, threads=threads, s3=s3, gdal_ops="")
   )
 })
 
-
+# and 00, all horizons
+bench::bench_time({
+    map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
+})
 
 
 
@@ -39,10 +46,11 @@ s3 <- arrow::s3_bucket("drivers", endpoint_override =  endpoint)
 s3$ls("noaa/neon/gefs")
 path <- s3$path("noaa/neon/gefs")
 df <- arrow::open_dataset(path)
-df |> filter(start_time > as.Date("2022-04-14")) |> collect()
+df |> filter(start_time == as.Date("2022-04-20")) 
 
 
 
+s3$ls("noaa/neon/gefs/2022-04-20")
 ## crop tifs
 #date <- dates[[1]]
 #dest <- fs::dir_create(glue("gefs.{date}"))
