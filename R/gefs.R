@@ -14,6 +14,7 @@ noaa_gefs <-
            gdal_ops = "", # "-co compress=zstd"
            s3 = arrow::s3_bucket("drivers", 
                                  endpoint_override = "data.ecoforecast.org"),
+           max_horizon = 840,
            purge = TRUE
            ) {
     
@@ -25,7 +26,7 @@ noaa_gefs <-
   nice_date <- as.Date(date, "%Y%m%d")
   start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
-  url_vars <- gefs_forecast(date)
+  url_vars <- gefs_forecast(date, cycle=cycle, max_horizon = max_horizon)
   p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns, start_time)
