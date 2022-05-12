@@ -9,23 +9,23 @@ source("R/neon.R")
 # Set desired dates and threads
 # Adjust threads between 70 - 1120 depending on available RAM, CPU, + bandwidth
 threads <- 560
-days <- 40
+days <- 10
 dates <- seq(Sys.Date(), Sys.Date()-days, length.out=days+1)
 
 # Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
 Sys.unsetenv("AWS_S3_ENDPOINT")
-endpoint <- "minio.thelio.carlboettiger.info"
 endpoint <-  "data.ecoforecast.org"
 s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 # or locally
 # s3 <- arrow::SubTreeFileSystem$create("~/tempdir")
 
-
 # Here we go
 bench::bench_time({
-  status <- map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
+  walk(c("00", "06", "12", "18"), function(cy)
+    map(dates, noaa_gefs, cycle=cy, threads=threads, s3=s3, gdal_ops="")
+  )
 })
 
 
