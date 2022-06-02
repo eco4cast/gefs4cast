@@ -18,7 +18,10 @@ dates <- seq(start, end, length.out=(days+1))
 # Set upload destination
 Sys.unsetenv("AWS_DEFAULT_REGION")
 Sys.unsetenv("AWS_S3_ENDPOINT")
-endpoint <-  "data.ecoforecast.org"
+Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
+
+endpoint <-  "js2.jetstream-cloud.org:8001"
+#endpoint <- "minio.carlboettiger.info"
 s3 <- arrow::s3_bucket("drivers", endpoint_override = endpoint )
 
 
@@ -27,14 +30,14 @@ max_horizon=6
 #cycle <- "00"
 # Here we go
 bench::bench_time({
-  walk(cycle, function(cy)
+p1 <-  walk(cycle, function(cy)
     map(dates, noaa_gefs, cycle=cy, max_horizon=6, threads=threads, s3=s3, gdal_ops="")
   )
 })
 
 # and 00, all horizons
 bench::bench_time({
-    map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
+p2 <-    map(dates, noaa_gefs, cycle="00", threads=threads, s3=s3, gdal_ops="")
 })
 
 
