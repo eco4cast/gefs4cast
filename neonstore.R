@@ -15,6 +15,8 @@ neon_store(product = "DP1.00006.001", table = "SECPRE_30min-basic") # Precipitat
 
 
 
+
+
 library(neonstore)
 library(dplyr)
 #db <- neon_db()

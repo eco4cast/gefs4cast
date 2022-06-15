@@ -64,15 +64,18 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
                   start_time = start_time,
                   forecast_valid = horizon,
                   horizon = get_hour(horizon),
-                  time = start_time + horizon,
                   horizon = as.numeric(horizon, "hours"),
-                  horizon = tidyr::replace_na(horizon,0)) |>
+                  horizon = tidyr::replace_na(horizon,0),
+                  time = start_time + horizon
+    ) |>
     left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
               by = "site_id")
   
   fc
 }
 
+
+## FIXME not valid for fluxes.  horizon "6-12" is different from "6-9"
 get_hour <- function(horizon) {
   x <- stringi::stri_extract(horizon, regex="^\\d+")
   lubridate::hours(as.integer(x))

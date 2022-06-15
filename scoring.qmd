@@ -1,0 +1,71 @@
+---
+format: gfm
+---
+
+
+```{r message = FALSE}
+library(neonstore)
+library(score4cast)
+library(arrow)
+library(dplyr)
+```
+
+
+Establish a connection to EFI NOAA GEFS archive:
+
+```{r}
+Sys.unsetenv("AWS_DEFAULT_REGION")
+Sys.unsetenv("AWS_S3_ENDPOINT")
+Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
+
+s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs", 
+                       endpoint_override =  "js2.jetstream-cloud.org:8001",
+                       anonymous=TRUE)
+df <- arrow::open_dataset(s3)
+```
+
+
+
+Let's collect forecasts made on a specific date because it's still huge: (1.55 GB, but operation consumes ~ 7 GB)
+
+```{r}
+fc <- df |> 
+  filter(start_time >= as.Date("2022-04-20"),
+         variable == "RH") |> 
+  collect()
+```
+
+
+Now let's score the forecast. 
+First, we need to pre-process NEON data a bit into the correct format.
+
+NEON doesn't measure at 2m height. I average over horizontal and vertical positions -- 
+all horizontal positions are at the same site so it makes sense to use the average.
+We could use the max vertical sensor, but heights vary and we'd have fewer observations that way.
+We could subset these measurements to just the 3 or 6 hr interval used by NOAA rather
+than every 30 minutes, but as the intervals mesh, we can just let the `inner_join`
+inside of `crps_logs_score` take care of that.
+
+
+```{r}
+rh <- neon_table(table = "RH_30min", lazy=TRUE) # Humidity, note two different sensor positions
+target <- rh |> 
+  filter(startDateTime >= as.Date("2022-04-20")) |>
+  select(startDateTime, siteID, RHMean, horizontalPosition, verticalPosition) |>
+  group_by(siteID, startDateTime) |> 
+  summarise(observed = mean(RHMean)) |>
+  mutate(variable = "RH") |>
+  rename(site_id = siteID, time = startDateTime) |> 
+  arrange(site_id,time) |> 
+  collect()
+```
+
+
+We are now ready to compute the scores: 
+
+```{r}
+scores <- score4cast::crps_logs_score(fc, target)
+scores |> filter(!is.na(crps))
+```
+
+
