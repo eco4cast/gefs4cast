@@ -8,6 +8,7 @@ library(neonstore)
 library(score4cast)
 library(arrow)
 library(dplyr)
+library(ggplot2)
 ```
 
 
@@ -68,4 +69,14 @@ scores <- score4cast::crps_logs_score(fc, target)
 scores |> filter(!is.na(crps))
 ```
 
+```{r}
+sites <- scores |> select(site_id) |> distinct() |> head() |> pull(site_id)
+
+scores |> filter(site_id %in% sites, time < lubridate::as_datetime("2022-05-01")) |>
+  ggplot(aes(time)) + 
+  geom_ribbon(aes(y=mean, ymin=quantile02.5, ymax = quantile97.5), alpha=0.6, fill="blue") +
+  geom_line(aes(y=mean), col="blue") +
+  geom_point(aes(y = observed)) + facet_wrap(~site_id)
+
+```
 

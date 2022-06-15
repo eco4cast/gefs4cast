@@ -4,6 +4,7 @@ library(neonstore)
 library(score4cast)
 library(arrow)
 library(dplyr)
+library(ggplot2)
 ```
 
 Establish a connection to EFI NOAA GEFS archive:
@@ -87,3 +88,17 @@ scores |> filter(!is.na(crps))
     10 ABBY    2022-04-20 12:00:00 RH        96.2 0.845     99.9  3.26   16.4 
     # … with 6,477 more rows, and 5 more variables: quantile02.5 <dbl>,
     #   quantile10 <dbl>, quantile90 <dbl>, quantile97.5 <dbl>, start_time <dttm>
+
+``` r
+sites <- scores |> select(site_id) |> distinct() |> head() |> pull(site_id)
+
+scores |> filter(site_id %in% sites, time < lubridate::as_datetime("2022-05-01")) |>
+  ggplot(aes(time)) + 
+  geom_ribbon(aes(y=mean, ymin=quantile02.5, ymax = quantile97.5), alpha=0.6, fill="blue") +
+  geom_line(aes(y=mean), col="blue") +
+  geom_point(aes(y = observed)) + facet_wrap(~site_id)
+```
+
+    Warning: Removed 3 rows containing missing values (geom_point).
+
+![](scoring_files/figure-gfm/unnamed-chunk-6-1.png)
