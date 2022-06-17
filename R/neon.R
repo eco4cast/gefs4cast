@@ -66,7 +66,7 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
                   horizon = get_hour(horizon),
                   horizon = as.numeric(horizon, "hours"),
                   horizon = tidyr::replace_na(horizon,0),
-                  time = start_time + horizon
+                  time = start_time + lubridate::hours(horizon)
     ) |>
     left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
               by = "site_id")
