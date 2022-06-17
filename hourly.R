@@ -29,7 +29,7 @@ forecast <- df |>
 
 
 forecast |> 
-  ggplot(aes(x = time, y = predicted, color = factor(ensemble)))  +
+  ggplot(aes(x = time, y = predicted, group = ensemble))  +
   geom_line() +
   facet_wrap(~variable, scale = "free")
 
