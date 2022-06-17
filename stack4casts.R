@@ -11,8 +11,11 @@ s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs",
 
 df <- arrow::open_dataset(s3)
 
+df |> distinct(start_time) |> collect()
+
 forecast <- df |> 
-  filter(start_time >= lubridate::as_datetime("2022-04-20 00:00:00"),
+  filter(start_time >= lubridate::as_datetime("2022-04-17 00:00:00"),
+         start_time <= lubridate::as_datetime("2022-04-19 00:00:00"),
          variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
          site_id == "BART",
          horizon %in% c(0,3,6)) |> 
@@ -24,3 +27,9 @@ forecast <- df |>
   mutate(start_time = min(start_time)) |> 
   disaggregate2hourly() #|> 
 #average_ensembles() |> 
+
+forecast |> 
+  ggplot(aes(x = time, y = predicted, color = factor(ensemble)))  +
+  geom_line() +
+  facet_wrap(~variable, scale = "free")
+
