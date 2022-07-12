@@ -11,6 +11,7 @@ Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
 model_name <- "NOAAGEFS_1hr"
 base_dir <- "~/Downloads"
 reprocess_all <- FALSE
+real_time_processing <- TRUE
 
 s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs", 
                        endpoint_override =  "data.ecoforecast.org",
@@ -18,7 +19,12 @@ s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs",
 
 df <- arrow::open_dataset(s3)
 
-dates <- seq(lubridate::as_date("2022-04-20"), lubridate::as_date("2022-04-22"), by = "1 day")
+if(real_time_processing){
+  dates <- seq(Sys.Date() - lubridate::days(4), Sys.Date(), by = "1 day")
+}else{
+  dates <- seq(lubridate::as_date("2022-04-20"), lubridate::as_date("2022-04-22"), by = "1 day")
+  
+}
 cycles <- c("00")
 
 sites <- df |> 
@@ -33,6 +39,23 @@ forecast_start_times <- expand.grid(dates, cycles, sites) |>
   mutate(start_times = paste0(date, " ", cycle, ":00:00"),
          dir = file.path(base_dir, model_name, site_id, date, cycle)) |> 
   select(site_id, start_times, dir)
+
+### Example single date and site
+
+df |> 
+  dplyr::filter(start_time == lubridate::as_datetime(forecast_start_times$start_times[1]),
+                variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
+                site_id == forecast_start_times$site_id[1]) |> 
+  collect() |> 
+  disaggregate_fluxes() |> 
+  add_horizon0_time() |> 
+  convert_precip2rate() |> 
+  disaggregate2hourly() |> 
+  ggplot(aes(x = time, y = predicted, group = ensemble))  +
+  geom_line() +
+  facet_wrap(~variable, scale = "free")
+
+## Example for writing to netcdf
 
 files_present <- purrr::map_int(1:nrow(forecast_start_times), function(i, forecast_start_times){
   if(fs::dir_exists(forecast_start_times$dir[i])){
@@ -70,10 +93,8 @@ purrr::walk(1:nrow(forecast_start_times),
             
 )
 
-forecast |> 
-  ggplot(aes(x = time, y = predicted, group = ensemble))  +
-  geom_line() +
-  facet_wrap(~variable, scale = "free")
+
+
 
 
 
