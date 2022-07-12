@@ -45,9 +45,9 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
     dplyr::mutate(layers = paste(L, 1:n, sep=":", collapse = ",")) |>
     tidyr::separate_rows(layers, sep=",") |>  
     dplyr::mutate(ensemble = stringi::stri_extract(layers, regex="\\d+$")) |>
-    arrange(L, ensemble)|> 
-    bind_cols(select(layers,-L)) |> 
-    arrange(rowid)
+    dplyr::arrange(L, ensemble)|> 
+    dplyr::bind_cols(dplyr::select(layers,-L)) |> 
+    dplyr::arrange(rowid)
   
   stopifnot( identical(ensemble$L, names(fc_by_site)) )
   
@@ -68,7 +68,7 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
                   horizon = tidyr::replace_na(horizon,0),
                   time = start_time + lubridate::hours(horizon)
     ) |>
-    left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
+    dplyr::left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
               by = "site_id")
   
   fc
@@ -86,8 +86,8 @@ neon_tifs <- function(dest,  ns = neon_coordinates()) {
   ext <- terra::ext(terra::vect(ns))
   
   fs::dir_ls(dest, glob= "*.tif") |> 
-    map(function(tif){
-      rast(tif) |> crop(ext) |> 
+    lapply(function(tif){
+      terra::rast(tif) |> terra::crop(ext) |> 
         terra::writeRaster(tif, 
                            gdal=c("COMPRESS=ZSTD", "TFW=YES"),
                            overwrite=TRUE)
@@ -97,3 +97,6 @@ neon_tifs <- function(dest,  ns = neon_coordinates()) {
   
 }
 
+
+globalVariables(c("rowid", "horizon", "latitude", "longitude", "L", "crop",
+                  "site_id", "vars", "variable", "n"))

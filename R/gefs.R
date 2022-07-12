@@ -47,7 +47,7 @@ noaa_gefs <-
   }
   assert_gdal()  
   date <- format(date, "%Y%m%d")
-  dest <- fs::dir_create(glue("gefs.{date}"))
+  dest <- fs::dir_create(glue::glue("gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
   start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
