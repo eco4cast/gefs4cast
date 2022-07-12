@@ -7,8 +7,26 @@
 # library(stats)
 # library(arrow)
 
+#' Stream NOAA GEFS GRIB to parquet
+#'
+#' 
+#' @param date date forecast is issued
+#' @param cycle hour forecast is issued (00, 06, 12, 18)
+#' @param threads parallel processes to run
+#' @param gdal_ops options to GDAL (e.g. compression)
+#' @param s3 an S3 bucket address, from [arrow::s3_bucket]
+#' @param max_horizon maximum horizon
+#' @param purge logical, clear downloaded/converted tif?
+#' @param quiet logical, verbose output?
+#' @param name_pattern Naming pattern for upload bucket (glue format)
+#'
+#' @return invisibly, the processx log
+#' @export
+#'
+#' @examplesIf interactive()
+#' noaa_gefs()
 noaa_gefs <- 
-  function(date, 
+  function(date = Sys.Date(), 
            cycle = "00", 
            threads = 70,
            gdal_ops = "", # "-co compress=zstd"
