@@ -6,12 +6,14 @@ library(ggplot2)
 library(gefs4cast)
 
 s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs", 
-                       endpoint_override =  "js2.jetstream-cloud.org:8001",
+                       endpoint_override =  "data.ecoforecast.org",
                        anonymous=TRUE)
 
 df <- arrow::open_dataset(s3)
 
-df |> distinct(start_time) |> collect()
+df |> dplyr::filter(variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
+                    site_id == "BART") |> 
+  distinct(start_time) |> collect()
 
 forecast <- df |> 
   filter(start_time >= lubridate::as_datetime("2022-04-17 00:00:00"),
