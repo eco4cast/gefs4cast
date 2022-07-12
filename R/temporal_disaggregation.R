@@ -104,10 +104,11 @@ correct_solar_geom <- function(df){
     select(all_of(var_order))
 }
 
-write_noaa_gefs_netcdf <- function(df, dir, model_name){
+write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
   
   df <- df |> 
-    mutate(unit = NA,
+    mutate(ensemble = ifelse(ensemble == 31, 0, ensemble),
+           unit = NA,
            unit = ifelse(variable == "TMP", "K", unit),
            unit = ifelse(variable == "PRES", "Pa", unit),
            unit = ifelse(variable == "RH", "1", unit),
@@ -138,6 +139,14 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name){
     
     max_time <- max(curr_df$time)
     
+    if(add_directory){
+      cycle <- stringr::str_pad(lubridate::hour(lubridate::as_datetime((files$start_time[i]))), 2, side = "left", pad = "0")
+      output_dir <- file.path(dir, model_name, files$site_id[i], lubridate::as_date(files$start_time[i]), cycle)
+    }else{
+      output_dir <- dir
+    }
+    fs::dir_create(output_dir)
+    
     output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$start_time[i], "%Y-%m-%dT%H"),"_",
                           format(max_time, "%Y-%m-%dT%H"),"_ens",stringr::str_pad(files$ensemble[i], 2, "left", 0),".nc")
     
@@ -159,7 +168,7 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name){
       nc_var_list[[j]] <- ncdf4::ncvar_def(varnames$variable[j], varnames$unit[j], dimensions_list, missval=NaN)
     }
     
-    nc_flptr <- ncdf4::nc_create(file.path(dir, output_file), nc_var_list, verbose = FALSE)
+    nc_flptr <- ncdf4::nc_create(file.path(output_dir, output_file), nc_var_list, verbose = FALSE)
     
     #For each variable associated with that ensemble
     for (j in 1:nrow(varnames)) {
