@@ -15,11 +15,18 @@ noaa_gefs <-
            s3 = arrow::s3_bucket("drivers", 
                                  endpoint_override = "data.ecoforecast.org"),
            max_horizon = 840,
-           purge = TRUE
+           purge = TRUE,
+           quiet = FALSE,
+           name_pattern = "noaa/neon/gefs/{nice_date}/{cycle}/neon.parquet"
            ) {
     
-  if(date < lubridate::as_date("2020-09-25")) stop("Dates earlier than 2020-09-25 are not currently supported")
-    
+  if (date < lubridate::as_date("2020-09-25")) {
+    stop("Dates earlier than 2020-09-25 are not currently supported")
+  }
+  
+  if (!quiet) {
+  message(paste("date:", date))
+  }
   assert_gdal()  
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue("gefs.{date}"))
@@ -31,7 +38,7 @@ noaa_gefs <-
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns, start_time)
   
-  path <- glue::glue("noaa/neon/gefs/{nice_date}/{date}-{cycle}.parquet")
+  path <- glue::glue(name_pattern)
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
   
