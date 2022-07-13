@@ -9,33 +9,24 @@ s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs",
                        endpoint_override =  "data.ecoforecast.org",
                        anonymous=TRUE)
 
-df <- arrow::open_dataset(s3)
-
-sites <- df |> 
-  dplyr::filter(start_time == lubridate::as_datetime(dates[1]),
-                variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF")) |> 
-  distinct(site_id) |> 
-  collect() |> 
-  pull(site_id)
+df <- arrow::open_dataset(s3, partitioning = c("start_date", "cycle"))
 
 d <- df |> dplyr::filter(variable == "PRES",
                          site_id == "BART",
-                         horizon %in% c(0,3,6)) |> 
-  distinct(start_time) |> collect()
+                         horizon %in% c(0,3)) |> 
+  distinct(start_date) |> collect()
 
 sites <- df |> 
-  dplyr::filter(start_time == lubridate::as_datetime(d[1]),
+  dplyr::filter(start_date == d$start_date[1],
                 variable == "PRES") |> 
   distinct(site_id) |> 
   collect() |> 
   pull(site_id)
 
 forecast <- df |> 
-  filter(start_time >= lubridate::as_datetime("2020-09-25 00:00:00"),
-         start_time <= max(d$start_time),
-         variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
+  filter(variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
          site_id == "BART",
-         horizon %in% c(0,3,6)) |> 
+         horizon %in% c(0,3)) |> 
   collect() |> 
   disaggregate_fluxes() |> 
   add_horizon0_time() |> 
