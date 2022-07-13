@@ -9,7 +9,7 @@ s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs",
                        endpoint_override =  "data.ecoforecast.org",
                        anonymous=TRUE)
 
-df <- arrow::open_dataset(s3, partitioning = c("start_date", "cycle"))
+df <- arrow::open_dataset(s3, partitioning = c("start_date", "offset"))
 
 d <- df |> dplyr::filter(variable == "PRES",
                          site_id == "BART",
