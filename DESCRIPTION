@@ -1,6 +1,6 @@
 Package: gefs4cast
-Title: 
-Version: 0.0.0.9000
+Title: Cloud-native Workflows for NOAA Global Ensemble Forecast System Files
+Version: 0.0.0.9900
 Authors@R: c(person(
               "Carl", "Boettiger", 
               email = "cboettig@gmail.com", 
@@ -11,11 +11,15 @@ Authors@R: c(person(
             )
 Description: Cloud-native utilites to access and parse Global Ensemble Forecast
   System (GEFS) "GRIB" files from Amazon Web Services (AWS) Open Data Public 
-  Archive, https://registry.opendata.aws/noaa-gefs/.
+  Archive, https://registry.opendata.aws/noaa-gefs/. Streams subset variables from
+  GRIB files to local tiff files, extract values desired coordinates (e.g. coordinates
+  of NEON sites), format to EFI forecast standard and stream to S3-bucket 
+  hosted parquet files. Requires GDAL >= 3.4.0 and arrow with S3-support.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
+SystemRequirements: GDAL >= 3.4.0
 Suggests: 
     spelling,
     testthat (>= 3.0.0)
@@ -28,4 +32,9 @@ Imports:
     arrow,
     processx,
     glue,
-    stringr
+    stringr,
+    fs,
+    lubridate,
+    tibble,
+    tidyr,
+    stringi

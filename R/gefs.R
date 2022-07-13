@@ -7,22 +7,47 @@
 # library(stats)
 # library(arrow)
 
+#' Stream NOAA GEFS GRIB to parquet
+#'
+#' 
+#' @param date date forecast is issued
+#' @param cycle hour forecast is issued (00, 06, 12, 18)
+#' @param threads parallel processes to run
+#' @param gdal_ops options to GDAL (e.g. compression)
+#' @param s3 an S3 bucket address, from [arrow::s3_bucket]
+#' @param max_horizon maximum horizon
+#' @param purge logical, clear downloaded/converted tif?
+#' @param quiet logical, verbose output?
+#' @param name_pattern Naming pattern for upload bucket (glue format)
+#'
+#' @return invisibly, the processx log
+#' @export
+#'
+#' @examplesIf interactive()
+#' noaa_gefs()
 noaa_gefs <- 
-  function(date, 
+  function(date = Sys.Date(), 
            cycle = "00", 
            threads = 70,
            gdal_ops = "", # "-co compress=zstd"
            s3 = arrow::s3_bucket("drivers", 
                                  endpoint_override = "data.ecoforecast.org"),
            max_horizon = 840,
-           purge = TRUE
+           purge = TRUE,
+           quiet = FALSE,
+           name_pattern = "noaa/neon/gefs/{nice_date}/{cycle}/neon.parquet"
            ) {
     
-  if(date < lubridate::as_date("2020-09-25")) stop("Dates earlier than 2020-09-25 are not currently supported")
-    
+  if (date < lubridate::as_date("2020-09-25")) {
+    stop("Dates earlier than 2020-09-25 are not currently supported")
+  }
+  
+  if (!quiet) {
+  message(paste("date:", date))
+  }
   assert_gdal()  
   date <- format(date, "%Y%m%d")
-  dest <- fs::dir_create(glue("gefs.{date}"))
+  dest <- fs::dir_create(glue::glue("gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
   start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
@@ -31,7 +56,7 @@ noaa_gefs <-
   ns <- neon_coordinates()
   fc <- neon_extract(dest, ns = ns, start_time)
   
-  path <- glue::glue("noaa/neon/gefs/{nice_date}/{date}-{cycle}.parquet")
+  path <- glue::glue(name_pattern)
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
   

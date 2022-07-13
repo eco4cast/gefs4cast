@@ -19,8 +19,8 @@ sites <- df |>
   pull(site_id)
 
 d <- df |> dplyr::filter(variable == "PRES",
-                    site_id == "BART",
-                    horizon %in% c(0,3,6)) |> 
+                         site_id == "BART",
+                         horizon %in% c(0,3,6)) |> 
   distinct(start_time) |> collect()
 
 sites <- df |> 
@@ -34,7 +34,7 @@ forecast <- df |>
   filter(start_time >= lubridate::as_datetime("2020-09-25 00:00:00"),
          start_time <= max(d$start_time),
          variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
-         site_id == sites[1],
+         site_id == "BART",
          horizon %in% c(0,3,6)) |> 
   collect() |> 
   disaggregate_fluxes() |> 
@@ -49,4 +49,3 @@ forecast |>
   ggplot(aes(x = time, y = predicted, group = ensemble))  +
   geom_line() +
   facet_wrap(~variable, scale = "free")
-
