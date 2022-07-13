@@ -34,7 +34,7 @@ forecast <- df |>
   filter(start_time >= lubridate::as_datetime("2020-09-25 00:00:00"),
          start_time <= max(d$start_time),
          variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
-         site_id == "BART",
+         site_id == sites[1],
          horizon %in% c(0,3,6)) |> 
   collect() |> 
   disaggregate_fluxes() |> 
