@@ -45,8 +45,8 @@ noaa_gefs <-
   if (!quiet) {
   message(paste("date:", date))
   }
-  
-  assert_gdal()  
+
+  assert_gdal()
   stopifnot(cycle %in% c("00", "06", "12", "18"))
   if(is.character(date)) date <- as.Date(date)
   date <- format(date, "%Y%m%d")
