@@ -45,7 +45,10 @@ noaa_gefs <-
   if (!quiet) {
   message(paste("date:", date))
   }
+  
   assert_gdal()  
+  stopifnot(cycle %in% c("00", "06", "12", "18"))
+  if(is.character(date)) date <- as.Date(date)
   date <- format(date, "%Y%m%d")
   dest <- fs::dir_create(glue::glue("gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
