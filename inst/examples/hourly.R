@@ -9,7 +9,7 @@ Sys.unsetenv("AWS_DEFAULT_REGION")
 Sys.unsetenv("AWS_S3_ENDPOINT")
 Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
 model_name <- "NOAAGEFS_1hr"
-base_dir <- "~/Downloads"
+base_dir <- "/home/rstudio/test_processing"
 reprocess_all <- FALSE
 real_time_processing <- TRUE
 
@@ -20,44 +20,33 @@ s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs",
 df <- arrow::open_dataset(s3, partitioning = c("start_date", "cycle"))
 
 if(real_time_processing){
-  dates <- seq(Sys.Date() - lubridate::days(4), Sys.Date(), by = "1 day")
+  dates <- as.character(seq(Sys.Date() - lubridate::days(4), Sys.Date(), by = "1 day"))
 }else{
-  dates <- seq(lubridate::as_date("2022-04-20"), lubridate::as_date("2022-04-22"), by = "1 day")
-  
+  dates <- as.character(seq(lubridate::as_date("2022-04-20"), lubridate::as_date("2022-04-22"), by = "1 day"))
 }
-cycles <- c("00")
+
+cycles <- "00"
+
+available_dates <- df |> 
+  dplyr::filter(start_date %in% dates,
+                cycle == 0,
+                variable == "PRES") |> 
+  distinct(start_date) |> 
+  collect() %>% 
+  pull(start_date)
 
 sites <- df |> 
-  dplyr::filter(start_date == as.character(dates[1]),
+  dplyr::filter(start_date == available_dates[1],
                 variable == "PRES") |> 
   distinct(site_id) |> 
   collect() |> 
   pull(site_id)
 
-forecast_start_times <- expand.grid(dates, cycles, sites) |> 
+forecast_start_times <- expand.grid(available_dates, cycles, sites) |> 
   stats::setNames(c("date", "cycle", "site_id")) |> 
   mutate(start_times = paste0(date, " ", cycle, ":00:00"),
          dir = file.path(base_dir, model_name, site_id, date, cycle)) |> 
   select(site_id, date, cycle, dir)
-
-### Example single date and site
-
-df |> 
-  dplyr::filter(start_date == as.character(forecast_start_times$date[1]),
-                variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
-                site_id == forecast_start_times$site_id[1],
-                cycle == as.integer(forecast_start_times$cycle[1])) |> 
-  select(-c("start_date", "cycle")) |>  
-  collect() |> 
-  disaggregate_fluxes() |> 
-  add_horizon0_time() |> 
-  convert_precip2rate() |> 
-  disaggregate2hourly() |> 
-  ggplot(aes(x = time, y = predicted, group = ensemble))  +
-  geom_line() +
-  facet_wrap(~variable, scale = "free")
-
-## Example for writing to netcdf
 
 files_present <- purrr::map_int(1:nrow(forecast_start_times), function(i, forecast_start_times){
   if(fs::dir_exists(forecast_start_times$dir[i])){
@@ -66,18 +55,21 @@ files_present <- purrr::map_int(1:nrow(forecast_start_times), function(i, foreca
     NA
   }
 },
-forecast_start_times = forecast_start_times)
+forecast_start_times = forecast_start_times
+)
 
 forecast_start_times <- bind_cols(forecast_start_times, files_present) |> 
   rename(files_present = `...4`) |> 
   filter(is.na(files_present) | files_present < 31 | reprocess_all)
 
-
 #future::plan("future::multisession", workers = 4)
 
 purrr::walk(1:nrow(forecast_start_times),
             function(i, forecast_start_times, df, model_name, base_dir){
-              df |> 
+              
+              fs::dir_create(forecast_start_times$dir[i])
+              
+              d1 <- df |> 
                 dplyr::filter(start_date == as.character(forecast_start_times$date[i]),
                               variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
                               site_id == forecast_start_times$site_id[i],
@@ -87,14 +79,15 @@ purrr::walk(1:nrow(forecast_start_times),
                 disaggregate_fluxes() |> 
                 add_horizon0_time() |> 
                 convert_precip2rate() |> 
-                disaggregate2hourly() |> 
-                write_noaa_gefs_netcdf(dir = base_dir, model_name = model_name, add_directory = TRUE)
+                disaggregate2hourly()
+              
+                arrow::write_parquet(d1, sink = file.path(forecast_start_times$dir[i], "test.parquet"))
+                write_noaa_gefs_netcdf(d1, dir = forecast_start_times$dir[i], model_name = model_name)
             },
             df = df,
             forecast_start_times= forecast_start_times,
             model_name = model_name,
             base_dir = base_dir
-            
 )
 
 

@@ -5,6 +5,9 @@ library(dplyr)
 library(ggplot2)
 library(gefs4cast)
 
+base_dir <- "/home/rstudio/test_processing/NOAAGEFS_1hr_stacked"
+generate_netcdf <- TRUE
+
 s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs", 
                        endpoint_override =  "data.ecoforecast.org",
                        anonymous=TRUE)
@@ -20,8 +23,10 @@ sites <- df |>
 
 sites <- sites[1:3]
 
-purrr::walk(sites, function(site, dir){
-  site_file <- paste0(dir, "/", site,".parquet")
+purrr::walk(sites, function(site, base_dir){
+  site_dir <- file.path(base_dir, site)
+  fs::dir_create(site_dir)
+  site_file <- paste0(site_dir,"/", site,".parquet")
   if(fs::file_exists(site_file)){
     d <- arrow::read_parquet(site_file) %>% 
       mutate(start_date = lubridate::as_date(time))
@@ -51,20 +56,31 @@ purrr::walk(sites, function(site, dir){
     mutate(start_time = min(start_time)) |> 
     disaggregate2hourly() |>
     dplyr::bind_rows(d2) |>
-    arrange(site_id, time, variable, ensemble) |>
-    arrow::write_parquet(sink = site_file)
+    arrange(site_id, time, variable, ensemble)
+  
+  #NEED TO UPDATE TO WRITE TO S3
+  arrow::write_parquet(forecast, sink = site_file)
+  
+  if(generate_netcdf){
+    #NEED TO UPDATE TO MOVE TO S3
+    write_noaa_gefs_netcdf(forecast, dir = site_dir, model_name = "NOAAGEFS_1hr_stacked")
+    netcdf_files <- fs::dir_ls(site_dir, recurse = TRUE, regexp = "[.]nc$")
+    #Add copy netcdf_files to bucket
+  }
+  
+  
 },
-dir = "/home/rstudio"
+base_dir = base_dir
 )
-  
-  #p <- forecast |> 
-  #  filter(ensemble <= 31) %>% 
-  #  ggplot(aes(x = time, y = predicted, group = ensemble))  +
-  #  geom_line() +
-  #  facet_wrap(~variable, scale = "free")
-  
-  #ggsave(p, filename = paste0("/home/rstudio/", sites[i],".pdf"), device = "pdf", height = 6, width = 12)
-  
+
+#p <- forecast |> 
+#  filter(ensemble <= 31) %>% 
+#  ggplot(aes(x = time, y = predicted, group = ensemble))  +
+#  geom_line() +
+#  facet_wrap(~variable, scale = "free")
+
+#ggsave(p, filename = paste0("/home/rstudio/", sites[i],".pdf"), device = "pdf", height = 6, width = 12)
+
 
 
 

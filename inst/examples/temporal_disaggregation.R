@@ -139,12 +139,7 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
     
     max_time <- max(curr_df$time)
     
-    if(add_directory){
-      cycle <- stringr::str_pad(lubridate::hour(lubridate::as_datetime((files$start_time[i]))), 2, side = "left", pad = "0")
-      output_dir <- file.path(dir, model_name, files$site_id[i], lubridate::as_date(files$start_time[i]), cycle)
-    }else{
-      output_dir <- dir
-    }
+    output_dir <- dir
     fs::dir_create(output_dir)
     
     output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$start_time[i], "%Y-%m-%dT%H"),"_",
