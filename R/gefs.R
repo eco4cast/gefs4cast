@@ -35,7 +35,7 @@ noaa_gefs <-
            max_horizon = 840,
            purge = TRUE,
            quiet = FALSE,
-           name_pattern = "noaa/neon/gefs/{nice_date}/{cycle}/neon.parquet"
+           name_pattern = "noaa/gefs-v12/stage1/{nice_date}/{cycle}/neon.parquet"
            ) {
     
   if (date < lubridate::as_date("2020-09-25")) {
