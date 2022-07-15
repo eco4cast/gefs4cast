@@ -21,9 +21,10 @@ s3_stage1 <- arrow::s3_bucket("drivers/noaa/gefsv12/stage1",
                               endpoint_override =  "data.ecoforecast.org",
                               anonymous=TRUE)
 
-s3_stage2 <- arrow::s3_bucket("drivers/noaa/gefsv12", 
+s3_stage2 <- arrow::s3_bucket("drivers/noaa/gefsv12/stage2", 
                               endpoint_override =  "data.ecoforecast.org",
                               anonymous=TRUE)
+
 df <- arrow::open_dataset(s3_stage1, partitioning = c("start_date", "cycle"))
 
 if(real_time_processing){
