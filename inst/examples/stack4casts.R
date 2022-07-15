@@ -5,7 +5,7 @@ library(dplyr)
 library(ggplot2)
 library(gefs4cast)
 
-base_dir <- "/home/rstudio/test_processing/NOAAGEFS_1hr_stacked"
+base_dir <- "/home/rstudio/test_processing/noaa/gefs/1hr_stacked"
 generate_netcdf <- TRUE
 
 s3 <- arrow::s3_bucket("drivers/noaa/neon/gefs", 
@@ -42,7 +42,7 @@ purrr::walk(sites, function(site, base_dir){
   forecast <- df |> 
     filter(variable %in% c("PRES","TMP","RH","UGRD","VGRD","APCP","DSWRF","DLWRF"),
            start_date %in% date_range,
-           site_id == sites[i],
+           site_id == site,
            horizon %in% c(0,3)) |> 
     select(-c("start_date", "cycle")) |>
     collect() |> 
