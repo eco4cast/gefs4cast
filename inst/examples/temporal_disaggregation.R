@@ -72,10 +72,17 @@ disaggregate2hourly <- function(df){
     tidyr::pivot_wider(names_from = variable, values_from = predicted) |> 
     dplyr::right_join(full_time, by = c("site_id", "ensemble", "time", "start_time")) |> 
     arrange(site_id, ensemble, time) |> 
+    group_by(site_id, ensemble)  |> 
+    tidyr::fill(c("PRATE","DSWRF","DLWRF"), .direction = "down") |> 
+    mutate(PRES =  imputeTS::na_interpolation(PRES, option = "linear"),
+           RH =  imputeTS::na_interpolation(RH, option = "linear"),
+           TMP =  imputeTS::na_interpolation(TMP, option = "linear"),
+           UGRD =  imputeTS::na_interpolation(UGRD, option = "linear"),
+           VGRD =  imputeTS::na_interpolation(UGRD, option = "linear")) |>
+    ungroup() |>
     tidyr::pivot_longer(-c("site_id", "ensemble", "time", "longitude", "latitude", "start_time"), names_to = "variable", values_to = "predicted") |> 
-    group_by(variable, ensemble) |> 
-    mutate(predicted = imputeTS::na_interpolation(predicted, option = "linear"),
-           horizon = as.numeric(time - start_time) / (60 * 60)) |> 
+    group_by(site_id, variable, ensemble) |> 
+    mutate(horizon = as.numeric(time - start_time) / (60 * 60)) |> 
     arrange(site_id, ensemble, variable, time) |> 
     tidyr::fill(c("longitude","latitude"), .direction = "down") |> 
     mutate(flux = ifelse(variable %in% c("PRATE","DSWRF","DLWRF"), 1, 0),
@@ -84,7 +91,6 @@ disaggregate2hourly <- function(df){
     dplyr::left_join(height_table, by = "variable") |>   
     select(all_of(var_order)) |> 
     ungroup()
-  
 }
 
 correct_solar_geom <- function(df){
@@ -96,11 +102,11 @@ correct_solar_geom <- function(df){
                   doy = lubridate::yday(time) + hour/24,
                   lon = ifelse(longitude < 0, 360 + longitude,longitude),
                   rpot = downscale_solar_geom(doy, lon, latitude)) |>  # hourly sw flux calculated using solar geometry
-    dplyr::group_by(site_id, ensemble, longitude, latitude, start_time, date) |> 
+    dplyr::group_by(site_id, ensemble, longitude, latitude, start_time, date, variable) |> 
     dplyr::mutate(avg.rpot = mean(rpot, na.rm = TRUE),
                   avg.SW = mean(predicted, na.rm = TRUE))|> # daily sw mean from solar geometry
     dplyr::ungroup() |>
-    dplyr::mutate(predicted = ifelse(variable == "DSWRF", rpot * (avg.SW/avg.rpot),predicted)) |> 
+    dplyr::mutate(predicted = ifelse(variable %in% c("DSWRF","surface_downwelling_shortwave_flux_in_air"), rpot * (avg.SW/avg.rpot),predicted)) |> 
     select(all_of(var_order))
 }
 
@@ -109,22 +115,15 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
   df <- df |> 
     mutate(ensemble = ifelse(ensemble == 31, 0, ensemble),
            unit = NA,
-           unit = ifelse(variable == "TMP", "K", unit),
-           unit = ifelse(variable == "PRES", "Pa", unit),
-           unit = ifelse(variable == "RH", "1", unit),
-           unit = ifelse(variable == "DLWRF", "Wm-2", unit),
-           unit = ifelse(variable == "DSWRF", "Wm-2", unit),
-           unit = ifelse(variable == "PRATE", "kgm-2s-1", unit),
-           unit = ifelse(variable == "VGRD", "ms-1", unit),
-           unit = ifelse(variable == "UGRD", "ms-1", unit),
-           variable = ifelse(variable == "TMP", "air_temperature", variable),
-           variable = ifelse(variable == "PRES", "air_pressure", variable),
-           variable = ifelse(variable == "RH", "relative_humidity", variable),
-           variable = ifelse(variable == "DLWRF", "surface_downwelling_longwave_flux_in_air", variable),
-           variable = ifelse(variable == "DSWRF", "surface_downwelling_shortwave_flux_in_air", variable),
-           variable = ifelse(variable == "PRATE", "precipitation_flux", variable),
-           variable = ifelse(variable == "VGRD", "eastward_wind", variable),
-           variable = ifelse(variable == "UGRD", "northward_wind", variable))
+                  unit = ifelse(variable == "air_temperature", "K", unit),
+                  unit = ifelse(variable == "air_pressure", "Pa", unit),
+                  unit = ifelse(variable == "relative_humidity", "1", unit),
+                  unit = ifelse(variable == "surface_downwelling_longwave_flux_in_air", "Wm-2", unit),
+                  unit = ifelse(variable == "surface_downwelling_shortwave_flux_in_air", "Wm-2", unit),
+                  unit = ifelse(variable == "precipitation_flux", "kgm-2s-1", unit),
+                  unit = ifelse(variable == "eastward_wind", "ms-1", unit),
+                  unit = ifelse(variable == "northward_wind", "ms-1", unit),
+                  unit = ifelse(variable == "precipitation_amount", "kgm-2", unit))
   
   files <- df |> 
     distinct(ensemble,site_id,start_time,latitude,longitude, .keep_all = FALSE)
@@ -132,7 +131,7 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
   for(i in 1:nrow(files)){
     
     curr_df <- df |> 
-      filter(site_id == files$site_id[i],
+      dplyr::filter(site_id == files$site_id[i],
              ensemble == files$ensemble[i],
              start_time == files$start_time[i]) |> 
       mutate(longitude = ifelse(longitude < 0, longitude + 360, longitude))
@@ -168,7 +167,7 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
     #For each variable associated with that ensemble
     for (j in 1:nrow(varnames)) {
       data <- curr_df |> 
-        filter(variable == varnames$variable[j]) |> 
+        dplyr::filter(variable == varnames$variable[j]) |> 
         pull(predicted)
       # "j" is the variable number.  "i" is the ensemble number. Remember that each row represents an ensemble
       ncdf4::ncvar_put(nc_flptr, nc_var_list[[j]], data)
@@ -176,6 +175,19 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
     
     ncdf4::nc_close(nc_flptr)  #Write to the disk/storage
   }
+}
+
+standardize_names_cf <- function(df){
+  df |> 
+    mutate(variable = ifelse(variable == "TMP", "air_temperature", variable),
+           variable = ifelse(variable == "PRES", "air_pressure", variable),
+           variable = ifelse(variable == "RH", "relative_humidity", variable),
+           variable = ifelse(variable == "DLWRF", "surface_downwelling_longwave_flux_in_air", variable),
+           variable = ifelse(variable == "DSWRF", "surface_downwelling_shortwave_flux_in_air", variable),
+           variable = ifelse(variable == "PRATE", "precipitation_flux", variable),
+           variable = ifelse(variable == "VGRD", "eastward_wind", variable),
+           variable = ifelse(variable == "UGRD", "northward_wind", variable),
+           variable = ifelse(variable == "APCP", "precipitation_amount", variable))
 }
 
 average_ensembles <- function(df){
