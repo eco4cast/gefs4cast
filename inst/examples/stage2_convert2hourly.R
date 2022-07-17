@@ -6,7 +6,7 @@ library(ggplot2)
 library(gefs4cast)
 readRenviron("~/.Renviron")
 
-source("/home/rstudio/gefs4cast/inst/examples/temporal_disaggregation.R")
+source(system.file("inst","examples","temporal_disaggregation.R", package = "gefs4cast"))
 
 Sys.unsetenv("AWS_DEFAULT_REGION")
 Sys.unsetenv("AWS_S3_ENDPOINT")

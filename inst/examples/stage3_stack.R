@@ -5,7 +5,7 @@ library(dplyr)
 library(ggplot2)
 library(gefs4cast)
 
-source("/home/rstudio/gefs4cast/inst/examples/temporal_disaggregation.R")
+source(system.file("inst","examples","temporal_disaggregation.R", package = "gefs4cast"))
 
 base_dir <- "/home/rstudio/test_processing/noaa/gefs-v12/"
 generate_netcdf <- TRUE
