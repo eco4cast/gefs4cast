@@ -136,7 +136,11 @@ gdal_download <- function(src,
                           threads=70, 
                           gdal_ops = "-co compress=zstd"
                           ) {
-  gdal <- paste("gdal_translate", 
+  
+  GDAL_BIN <- Sys.getenv('GDAL_BIN', "/usr/local/bin/")
+  
+  gdal <- paste(paste0(GDAL_BIN,
+                "gdal_translate"), 
                 gdal_ops,
                 "-of GTIFF",
                 vars,
@@ -150,7 +154,7 @@ gdal_download <- function(src,
   shell <- "src.sh"
   cmd <- c(cmd, "wait", "echo 'Finshed!'")
   readr::write_lines(cmd, shell)
-  p <- processx::run("bash", shell)
+  p <- processx::run("/usr/bin/bash", shell)
   
   unlink(shell)
   invisible(p)
@@ -158,7 +162,9 @@ gdal_download <- function(src,
 
 
 assert_gdal <- function() {
-  x <- processx::run("gdalinfo", "--version")
+  GDAL_BIN <- Sys.getenv('GDAL_BIN', "/usr/local/bin/")
+  
+  x <- processx::run(paste0(GDAL_BIN, "gdalinfo"), "--version")
   version <- gsub("GDAL (\\d\\.\\d\\.\\d), .*", "\\1", x$stdout)
   stopifnot(utils::compareVersion(version, "3.4.0") >=0 )
 }
