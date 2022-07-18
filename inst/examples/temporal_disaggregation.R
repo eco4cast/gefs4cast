@@ -141,8 +141,7 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
     output_dir <- dir
     fs::dir_create(output_dir)
     
-    output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$start_time[i], "%Y-%m-%dT%H"),"_",
-                          format(max_time, "%Y-%m-%dT%H"),"_ens",stringr::str_pad(files$ensemble[i], 2, "left", 0),".nc")
+    output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$start_time[i], "%Y-%m-%dT%H"), "_ens",stringr::str_pad(files$ensemble[i], 2, "left", 0),".nc")
     
     #Define dimensions:
     time_dim <- ncdf4::ncdim_def(name="time",
