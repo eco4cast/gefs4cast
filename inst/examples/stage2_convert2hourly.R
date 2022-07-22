@@ -120,6 +120,8 @@ if(nrow(forecast_start_times) > 0){
                   disaggregate_fluxes() |> 
                   add_horizon0_time() |> 
                   convert_precip2rate() |> 
+                  convert_temp2kelvin() |> 
+                  convert_rh2proportion() |> 
                   disaggregate2hourly() |>
                   standardize_names_cf() |> 
                   correct_solar_geom()

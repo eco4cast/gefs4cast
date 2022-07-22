@@ -38,6 +38,16 @@ convert_precip2rate <- function(df){
     select(all_of(var_order))
 }
 
+convert_temp2kelvin <- function(df){
+  df |> 
+    mutate(predicted = ifelse(variable == "TMP", predicted + 273, predicted))
+}
+
+convert_rh2proportion <- function(df){
+  df |> 
+    mutate(predicted = ifelse(variable == "RH", predicted/100, predicted))
+}
+
 disaggregate2hourly <- function(df){
   
   height_table <- df |> 
