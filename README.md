@@ -18,9 +18,10 @@ For variable definitions, see the [NOAA tables](https://www.nco.ncep.noaa.gov/pm
 ```r
 library(arrow)
 library(dplyr)
-s3 <- s3_bucket("neon4cast-drivers/noaa/gefs-v12",
+Sys.unsetenv("AWS_DEFAULT_REGION")
+s3 <- s3_bucket("neon4cast-drivers/noaa/gefs-v12/stage1",
                 endpoint_override = "data.ecoforecast.org", 
-                anonymous = True)
+                anonymous = TRUE)
 df <- open_dataset(s3, partitioning=c("start_date", "cycle"))
 df |> filter(start_date == "2022-04-02", cycle == "00", ensemble==1)
 
