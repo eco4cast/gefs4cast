@@ -35,6 +35,9 @@ noaa_gefs <-
            max_horizon = 840,
            purge = TRUE,
            quiet = FALSE,
+           dest = ".",
+           locations = paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+                                  "raw/master/noaa_download_site_list.csv"),
            name_pattern = "noaa/gefs-v12/stage1/{nice_date}/{cycle}/neon.parquet"
            ) {
     
@@ -50,13 +53,13 @@ noaa_gefs <-
   stopifnot(cycle %in% c("00", "06", "12", "18"))
   if(is.character(date)) date <- as.Date(date)
   date <- format(date, "%Y%m%d")
-  dest <- fs::dir_create(glue::glue("gefs.{date}"))
+  dest <- fs::dir_create(glue::glue(dest,"/gefs.{date}"))
   nice_date <- as.Date(date, "%Y%m%d")
   start_time <- lubridate::as_datetime(paste0(nice_date, " ",cycle,":00:00"))
   
   url_vars <- gefs_forecast(date, cycle=cycle, max_horizon = max_horizon)
   p <- gdal_download(src = url_vars$url, vars = url_vars$vars, dest, threads, gdal_ops)
-  ns <- neon_coordinates()
+  ns <- neon_coordinates(locations)
   fc <- neon_extract(dest, ns = ns, start_time)
   
   path <- glue::glue(name_pattern)
