@@ -143,7 +143,8 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
     curr_df <- df |> 
       dplyr::filter(site_id == files$site_id[i],
              ensemble == files$ensemble[i],
-             start_time == files$start_time[i]) |> 
+             start_time == files$start_time[i]) |>
+      mutate(horizon = as.numeric(time - start_time) / (60 * 60)) |> 
       mutate(longitude = ifelse(longitude < 0, longitude + 360, longitude))
     
     max_time <- max(curr_df$time)
