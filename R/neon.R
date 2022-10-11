@@ -20,7 +20,7 @@ neon_coordinates <- function(locations) {
 ## Reshape into EFI standard
 
 
-neon_extract <- function(dest, ns = neon_coordinates(), ) { 
+neon_extract <- function(dest, ns = neon_coordinates(), reference_datetime) { 
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
