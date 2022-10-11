@@ -20,16 +20,16 @@ neon_coordinates <- function(locations) {
 ## Reshape into EFI standard
 
 
-neon_extract <- function(dest, ns = neon_coordinates(), start_time) { 
+neon_extract <- function(dest, ns = neon_coordinates(), ) { 
   fs::dir_ls(dest, glob= "*.tif") |>
     terra::rast() |> 
     terra::extract(ns) |> 
-    efi_format(ns = ns, start_time = start_time)
+    efi_format(ns = ns, reference_datetime = reference_datetime)
   
 }
 
 
-efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
+efi_format <- function(fc_by_site, ns = neon_coordinates(), reference_datetime) {
   
   ## Parse layer name information
   layer_names <- names(fc_by_site)
@@ -58,15 +58,16 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
     tidyr::pivot_longer(-site_id, names_to="variable", values_to="prediction") |>
     tidyr::separate(variable, into=c("variable", "height", "horizon", "ensemble"),
                     sep=":", remove = FALSE) |> 
-    dplyr::mutate(parameter = as.integer(ensemble),
+    dplyr::mutate(ensemble = as.integer(ensemble),
                   family = "ensemble",
-                  reference_datetime = start_time,
+                  reference_datetime = reference_datetime,
                   forecast_valid = horizon,
                   horizon = get_hour(horizon),
                   horizon = as.numeric(horizon, "hours"),
                   horizon = tidyr::replace_na(horizon,0),
                   datetime = reference_datetime + lubridate::hours(horizon)
     ) |>
+    dplyr::rename(parameter = ensemble) |> 
     dplyr::left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
               by = "site_id")
   
