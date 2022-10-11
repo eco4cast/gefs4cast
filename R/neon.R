@@ -98,4 +98,4 @@ neon_tifs <- function(dest,  ns = neon_coordinates()) {
 
 
 globalVariables(c("rowid", "horizon", "latitude", "longitude", "L", "crop",
-                  "site_id", "vars", "variable", "n"))
+                  "site_id", "vars", "variable", "n", "reference_datetime"))
