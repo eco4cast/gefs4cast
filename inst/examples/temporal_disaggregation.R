@@ -6,12 +6,12 @@ disaggregate_fluxes <- function(df){
            start = ifelse(flux == 1, gsub("^(\\d+).*", "\\1",forecast_valid), NA),
            end = ifelse(flux == 1, gsub("\\d+-(\\d+).*",  "\\1", forecast_valid), NA),
            diff = ifelse(flux == 1, as.numeric(end) - as.numeric(start), NA),
-           time = lubridate::as_datetime(ifelse(is.na(time) & forecast_valid == "anl", start_time, time)))|> 
-    group_by(site_id, variable, height, horizon, ensemble, start_time, time, longitude, latitude) |> 
+           datetime = lubridate::as_datetime(ifelse(is.na(datetime) & forecast_valid == "anl", reference_datetime, datetime)))|> 
+    group_by(site_id, variable, height, horizon, family, parameter, reference_datetime, datetime, longitude, latitude) |> 
     mutate(nrows = length(predicted),
            predicted = ifelse(diff == 6 & nrows == 2 & variable != "APCP", 2 * last(predicted) - first(predicted), predicted),
            predicted = ifelse(diff == 6 & nrows == 2 & variable == "APCP", last(predicted) - first(predicted), predicted),
-           time = lubridate::as_datetime(ifelse(diff == 6 & nrows == 2, time + lubridate::hours(3), time)),
+           datetime = lubridate::as_datetime(ifelse(diff == 6 & nrows == 2, datetime + lubridate::hours(3), datetime)),
            horizon = ifelse(diff == 6 & nrows == 2, horizon + 3, horizon),
            start = ifelse(diff == 6 & nrows == 2, as.numeric(start) + 3, as.numeric(start)),
            forecast_valid = ifelse(flux == 1 & variable != "APCP", paste0(start,"-",end," hour ave fcst"), forecast_valid),
@@ -23,7 +23,7 @@ disaggregate_fluxes <- function(df){
 
 add_horizon0_time <- function(df){
   df |> 
-    mutate(time = lubridate::as_datetime(ifelse(is.na(time) & forecast_valid == "anl", start_time, time)))
+    mutate(datetime = lubridate::as_datetime(ifelse(is.na(datetime) & forecast_valid == "anl", reference_datetime, datetime)))
 }
 
 convert_precip2rate <- function(df){
@@ -55,34 +55,34 @@ disaggregate2hourly <- function(df){
     distinct()
   
   ensemble_maxtime <- df |> 
-    group_by(site_id, ensemble, start_time) |> 
-    summarise(max_time = max(time), .groups = "drop")
+    group_by(site_id, family, family, parameter, reference_datetime) |> 
+    summarise(max_time = max(datetime), .groups = "drop")
   
   
-  ensembles <- unique(df$ensemble)
+  ensembles <- unique(df$parameter)
   sites <- unique(df$site_id)
-  time <- seq(min(df$time), max(df$time), by = "1 hour")
-  start_time <- unique(df$start_time)
+  datetime <- seq(min(df$datetime), max(df$datetime), by = "1 hour")
+  reference_datetime <- unique(df$reference_datetime)
   
-  full_time <- expand.grid(sites, ensembles, time, start_time) |> 
+  full_time <- expand.grid(sites, ensembles, datetime, reference_datetime) |> 
     rename(site_id = Var1,
-           ensemble = Var2,
-           time = Var3,
-           start_time = Var4) |> 
-    mutate(time = lubridate::as_datetime(time)) |> 
-    arrange(site_id, ensemble, start_time, time) |> 
-    dplyr::left_join(ensemble_maxtime, by = c("site_id","ensemble", "start_time")) |> 
-    dplyr::filter(time <= max_time) |> 
+           parameter = Var2,
+           datetime = Var3,
+           reference_datetime = Var4) |> 
+    mutate(datetime = lubridate::as_datetime(datetime)) |> 
+    arrange(site_id, family, family, parameter, reference_datetime, datetime) |> 
+    dplyr::left_join(ensemble_maxtime, by = c("site_id","parameter", "reference_datetime")) |> 
+    dplyr::filter(datetime <= max_time) |> 
     dplyr::select(-c("max_time"))
   
   var_order <- names(df)
   
   df |> 
-    select(site_id, ensemble, time, variable, predicted, longitude, latitude, start_time) |> 
+    select(site_id, family, family, parameter, datetime, variable, predicted, longitude, latitude, reference_datetime) |> 
     tidyr::pivot_wider(names_from = variable, values_from = predicted) |> 
-    dplyr::right_join(full_time, by = c("site_id", "ensemble", "time", "start_time")) |> 
-    arrange(site_id, ensemble, time) |> 
-    group_by(site_id, ensemble)  |> 
+    dplyr::right_join(full_time, by = c("site_id", "parameter", "datetime", "reference_datetime")) |> 
+    arrange(site_id, family, family, parameter, datetime) |> 
+    group_by(site_id, parameter)  |> 
     tidyr::fill(c("PRATE","DSWRF","DLWRF"), .direction = "down") |> 
     mutate(PRES =  imputeTS::na_interpolation(PRES, option = "linear"),
            RH =  imputeTS::na_interpolation(RH, option = "linear"),
@@ -90,10 +90,10 @@ disaggregate2hourly <- function(df){
            UGRD =  imputeTS::na_interpolation(UGRD, option = "linear"),
            VGRD =  imputeTS::na_interpolation(UGRD, option = "linear")) |>
     ungroup() |>
-    tidyr::pivot_longer(-c("site_id", "ensemble", "time", "longitude", "latitude", "start_time"), names_to = "variable", values_to = "predicted") |> 
-    group_by(site_id, variable, ensemble) |> 
-    mutate(horizon = as.numeric(time - start_time) / (60 * 60)) |> 
-    arrange(site_id, ensemble, variable, time) |> 
+    tidyr::pivot_longer(-c("site_id", "parameter", "datetime", "longitude", "latitude", "reference_datetime"), names_to = "variable", values_to = "predicted") |> 
+    group_by(site_id, variable, parameter) |> 
+    mutate(horizon = as.numeric(datetime - reference_datetime) / (60 * 60)) |> 
+    arrange(site_id, family, family, parameter, variable, datetime) |> 
     tidyr::fill(c("longitude","latitude"), .direction = "down") |> 
     mutate(flux = ifelse(variable %in% c("PRATE","DSWRF","DLWRF"), 1, 0),
            forecast_valid = ifelse(flux == 1, paste0(horizon,"-",horizon + 1," hour ave fcst"), paste0(horizon," hour fcst")),
@@ -107,12 +107,12 @@ correct_solar_geom <- function(df){
   
   var_order <- names(df)
   d <- df |> 
-    dplyr::mutate(hour = lubridate::hour(time),
-                  date = lubridate::as_date(time),
-                  doy = lubridate::yday(time) + hour/24,
+    dplyr::mutate(hour = lubridate::hour(datetime),
+                  date = lubridate::as_date(datetime),
+                  doy = lubridate::yday(datetime) + hour/24,
                   lon = ifelse(longitude < 0, 360 + longitude,longitude),
                   rpot = downscale_solar_geom(doy, lon, latitude)) |>  # hourly sw flux calculated using solar geometry
-    dplyr::group_by(site_id, ensemble, longitude, latitude, start_time, date, variable) |> 
+    dplyr::group_by(site_id, family, family, parameter, longitude, latitude, reference_datetime, date, variable) |> 
     dplyr::mutate(avg.rpot = mean(rpot, na.rm = TRUE),
                   avg.SW = mean(predicted, na.rm = TRUE))|> # daily sw mean from solar geometry
     dplyr::ungroup() |>
@@ -123,7 +123,7 @@ correct_solar_geom <- function(df){
 write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
   
   df <- df |> 
-    mutate(ensemble = ifelse(ensemble == 31, 0, ensemble),
+    mutate(parameter = ifelse(parameter == 31, 0, parameter),
            unit = NA,
                   unit = ifelse(variable == "air_temperature", "K", unit),
                   unit = ifelse(variable == "air_pressure", "Pa", unit),
@@ -136,27 +136,27 @@ write_noaa_gefs_netcdf <- function(df, dir, model_name, add_directory){
                   unit = ifelse(variable == "precipitation_amount", "kgm-2", unit))
   
   files <- df |> 
-    distinct(ensemble,site_id,start_time,latitude,longitude, .keep_all = FALSE)
+    distinct(family, family, parameter,site_id,reference_datetime,latitude,longitude, .keep_all = FALSE)
   
   for(i in 1:nrow(files)){
     
     curr_df <- df |> 
       dplyr::filter(site_id == files$site_id[i],
-             ensemble == files$ensemble[i],
-             start_time == files$start_time[i]) |>
-      mutate(horizon = as.numeric(time - start_time) / (60 * 60)) |> 
+             parameter == files$parameter[i],
+             reference_datetime == files$reference_datetime[i]) |>
+      mutate(horizon = as.numeric(datetime - reference_datetime) / (60 * 60)) |> 
       mutate(longitude = ifelse(longitude < 0, longitude + 360, longitude))
     
-    max_time <- max(curr_df$time)
+    max_time <- max(curr_df$datetime)
     
     output_dir <- dir
     fs::dir_create(output_dir)
     
-    output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$start_time[i], "%Y-%m-%dT%H"), "_ens",stringr::str_pad(files$ensemble[i], 2, "left", 0),".nc")
+    output_file <- paste0(model_name,"_",files$site_id[i],"_", format(files$reference_datetime[i], "%Y-%m-%dT%H"), "_ens",stringr::str_pad(files$parameter[i], 2, "left", 0),".nc")
     
     #Define dimensions:
     time_dim <- ncdf4::ncdim_def(name="time",
-                                 units = paste("hours since", format(files$start_time[i], "%Y-%m-%d %H:%M")),
+                                 units = paste("hours since", format(files$reference_datetime[i], "%Y-%m-%d %H:%M")),
                                  unique(curr_df$horizon), #GEFS forecast starts 6 hours from start time
                                  create_dimvar = TRUE)
     lat_dim <- ncdf4::ncdim_def("latitude", "degree_north", files$latitude[i], create_dimvar = TRUE)
@@ -202,9 +202,9 @@ standardize_names_cf <- function(df){
 
 average_ensembles <- function(df){
   df |> 
-    group_by(site_id, ensemble, time, variable, longitude, latitude, start_time, horizon) |> 
+    group_by(site_id, family, parameter, datetime, variable, longitude, latitude, reference_datetime, horizon) |> 
     summarize(predicted = mean(predicted, na.rm = TRUE), .groups = "drop") |> 
-    mutate(ensemble = "AV")
+    mutate(parameter = "AV")
 }
 
 #' Cosine of solar zenith angle
