@@ -55,16 +55,17 @@ efi_format <- function(fc_by_site, ns = neon_coordinates(), start_time) {
   fc <- 
     fc_by_site |> 
     tibble::rownames_to_column(var = "site_id") |>
-    tidyr::pivot_longer(-site_id, names_to="variable", values_to="predicted") |>
+    tidyr::pivot_longer(-site_id, names_to="variable", values_to="prediction") |>
     tidyr::separate(variable, into=c("variable", "height", "horizon", "ensemble"),
                     sep=":", remove = FALSE) |> 
-    dplyr::mutate(ensemble = as.integer(ensemble),
-                  start_time = start_time,
+    dplyr::mutate(parameter = as.integer(ensemble),
+                  family = "ensemble",
+                  reference_datetime = start_time,
                   forecast_valid = horizon,
                   horizon = get_hour(horizon),
                   horizon = as.numeric(horizon, "hours"),
                   horizon = tidyr::replace_na(horizon,0),
-                  time = start_time + lubridate::hours(horizon)
+                  datetime = reference_datetime + lubridate::hours(horizon)
     ) |>
     dplyr::left_join(tibble::rownames_to_column(as.data.frame(ns), "site_id"),
               by = "site_id")
