@@ -38,7 +38,7 @@ noaa_gefs <-
            dest = ".",
            locations = paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
                                   "raw/master/noaa_download_site_list.csv"),
-           name_pattern = "noaa/gefs-v12/stage1/{nice_date}/{cycle}/neon.parquet"
+           name_pattern = "noaa/gefs-v12/stage1/{cycle_int}/{nice_date}/part-0.parquet"
            ) {
     
   if (date < lubridate::as_date("2020-09-25")) {
@@ -62,6 +62,7 @@ noaa_gefs <-
   ns <- neon_coordinates(locations)
   fc <- neon_extract(dest, ns = ns, start_time)
   
+  cycle_int <- as.integer(cycle)
   path <- glue::glue(name_pattern)
   outfile <- s3$path(path)
   arrow::write_parquet(fc, outfile)
