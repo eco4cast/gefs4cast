@@ -13,6 +13,9 @@ noaa_gefs(
   max_horizon = 840,
   purge = TRUE,
   quiet = FALSE,
+  dest = ".",
+  locations = paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+    "raw/master/noaa_download_site_list.csv"),
   name_pattern = "noaa/gefs-v12/stage1/{nice_date}/{cycle}/neon.parquet"
 )
 }
@@ -32,6 +35,10 @@ noaa_gefs(
 \item{purge}{logical, clear downloaded/converted tif?}
 
 \item{quiet}{logical, verbose output?}
+
+\item{dest}{destination directory}
+
+\item{locations}{where to access a list of download sites (lat/long)}
 
 \item{name_pattern}{Naming pattern for upload bucket (glue format)}
 }

@@ -18,6 +18,8 @@
 #' @param max_horizon maximum horizon
 #' @param purge logical, clear downloaded/converted tif?
 #' @param quiet logical, verbose output?
+#' @param dest destination directory
+#' @param locations where to access a list of download sites (lat/long)
 #' @param name_pattern Naming pattern for upload bucket (glue format)
 #'
 #' @return invisibly, the processx log
