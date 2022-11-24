@@ -116,7 +116,7 @@ correct_solar_geom <- function(df){
     dplyr::mutate(avg.rpot = mean(rpot, na.rm = TRUE),
                   avg.SW = mean(prediction, na.rm = TRUE))|> # daily sw mean from solar geometry
     dplyr::ungroup() |>
-    dplyr::mutate(prediction = ifelse(variable %in% c("DSWRF","surface_downwelling_shortwave_flux_in_air"), rpot * (avg.SW/avg.rpot),prediction)) |> 
+    dplyr::mutate(prediction = ifelse(variable %in% c("DSWRF","surface_downwelling_shortwave_flux_in_air") & avg.rpot > 0.0, rpot * (avg.SW/avg.rpot),prediction)) |> 
     select(all_of(var_order))
 }
 
