@@ -16,7 +16,7 @@ noaa_gefs(
   dest = ".",
   locations = paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
     "raw/master/noaa_download_site_list.csv"),
-  name_pattern = "noaa/gefs-v12/stage1/{nice_date}/{cycle}/neon.parquet"
+  name_pattern = "noaa/gefs-v12/stage1/{cycle_int}/{nice_date}/part-0.parquet"
 )
 }
 \arguments{
