@@ -27,7 +27,8 @@ gefs_forecast <- function(date = "20220314",
                                 "-b 57 -b 63 -b 64 -b 67 -b 68 -b 69 -b 78 -b 79",
                                 "-b 57 -b 64 -b 65 -b 66 -b 67")) |> 
     dplyr::mutate(ens_avg = ens_avg) |> 
-    dplyr::filter((ens_avg == TRUE & ensemble == "geavg") | (ens_avg == FALSE & ensemble != "geavg")) |> 
+    dplyr::filter((ens_avg == TRUE & ensemble == "geavg") | 
+                    (ens_avg == FALSE & ensemble != "geavg")) |> 
     dplyr::rowwise() |> 
     dplyr::mutate(url = gefs_url(horizon, date, NN=ensemble, cycle)) |> 
     dplyr::select(url, vars)

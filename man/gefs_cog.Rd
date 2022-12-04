@@ -8,9 +8,13 @@ gefs_cog(
   dest = ".",
   date = Sys.Date(),
   cycle = "00",
+  ens_avg = FALSE,
+  series = "atmos",
+  set = "pgrb2a",
+  res = "0p50",
+  max_horizon = 840,
   threads = 70,
-  gdal_ops = "-co compress=zstd",
-  max_horizon = 840
+  gdal_ops = "-co compress=zstd"
 )
 }
 \arguments{
@@ -20,11 +24,19 @@ gefs_cog(
 
 \item{cycle}{hour forecast is issued (00, 06, 12, 18)}
 
+\item{ens_avg}{should we just access the ensemble average instead?}
+
+\item{series}{atmos series}
+
+\item{set}{the GRIB dataset, default to common atmospheric data}
+
+\item{res}{resolution, 0.50 may be the only available at this time}
+
+\item{max_horizon}{maximum horizon}
+
 \item{threads}{parallel processes to run}
 
 \item{gdal_ops}{options to GDAL (e.g. compression)}
-
-\item{max_horizon}{maximum horizon}
 }
 \value{
 invisibly, the processx log
