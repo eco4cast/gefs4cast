@@ -7,7 +7,15 @@
 # library(tidyr)
 
 # NEON site longitude/latitudes
-neon_coordinates <- function(locations) {
+
+#' NEON coordinates
+#' 
+#' access a data.frame of NEON coordinates for all NEON sites
+#' @param locations a URL to the NEON locations as a csv file
+#' @export
+neon_coordinates <- function(locations = 
+  paste0("https://github.com/eco4cast/neon4cast-noaa-download/",
+         "raw/master/noaa_download_site_list.csv")) {
   sites <- readr::read_csv(locations,
     show_col_types = FALSE,
     progress = FALSE) 
