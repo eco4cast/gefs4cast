@@ -1,0 +1,105 @@
+---
+output: html
+---
+
+
+```{r opts}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+```
+
+```{r setup}
+library(gdalcubes)
+library(gefs4cast) # remotes::install_github("neon4cast/gefs4cast")
+library(stringr)
+library(lubridate)
+library(stars)
+library(viridisLite)
+gdalcubes_options(parallel = 24)
+```
+
+
+```{r}
+gefsdir <- tempfile()
+## 3-hr period up to 10 days, (then every 6 hrs up to 35 day horizon)
+gefs_cog(gefsdir, ens_avg=TRUE,
+         max_horizon=240, date = Sys.Date() - 1) |>
+  system.time()
+```
+
+```{r}
+# 000 file has different bands and so cannot be stacked into the collection
+files <- fs::dir_ls(gefsdir, type="file", recurse = TRUE)[-1]
+step <- files |> str_extract("f\\d{3}\\.tif") |> str_extract("\\d{3}") 
+datetime <- Sys.Date() + hours(step) 
+
+# pull band names out with stars, hack the timestamp off of the band name
+fc <- stars::read_stars(files[1]) 
+bandnames <- 
+  stars::st_get_dimension_values(fc, 3) |>
+  stringr::str_extract("([A-Z]+):") |> str_remove(":")
+```
+
+```{r}
+gefs_cube <- create_image_collection(files,
+                                     date_time = datetime, 
+                                     band_names = bandnames)
+```
+
+
+```{r}
+box <- sf::st_bbox(fc)
+#box <- sf::st_bbox(spData::us_states)
+#box <- c(-75, 40, -70, 44)
+
+iso <-"%Y-%m-%dT%H:%M:%S"
+ext <- list(t0 = as.character(min(datetime),iso), 
+              t1 = as.character(max(datetime),iso),
+              left = box[1], right = box[3],
+              top = box[4], bottom = box[2])
+v <- cube_view(srs = "EPSG:4326", #sf::st_crs(fc)$wkt,
+               extent = ext,
+              dx = 0.5, dy = 0.5, # original resolution -- half-degree
+              #dx = 0.1, dy = 0.1, 
+              # dt= "PT30M", # finer resolution 
+              dt = "PT3H",   # original resolution
+               aggregation = "mean", resampling = "cubicspline"
+)
+v_fine <- cube_view(srs = "EPSG:4326", #sf::st_crs(fc)$wkt,
+               extent = ext,
+               dx = 0.1, dy = 0.1, 
+               dt = "PT3H",   # original resolution
+               aggregation = "mean", resampling = "cubicspline"
+)
+```
+
+
+```{r}
+raster_cube(gefs_cube, v_fine) |> 
+   gdalcubes::select_bands("TMP") |> 
+   gdalcubes::fill_time("linear") |>
+   slice_time(datetime = "2022-12-05 06:30:00") |>
+   plot(col = viridis, nbreaks=100)
+```
+
+
+```{r}
+raster_cube(gefs_cube, v) |>
+  gdalcubes::select_bands("TMP") |>
+  # gdalcubes::fill_time("linear") |>
+  animate( col = viridisLite::viridis, nbreaks=100,
+           fps=10, save_as = "temp.gif")
+```
+
+![](temp.gif)
+
+
+ Watch the days spin by
+
+```{r}
+raster_cube(gefs_cube, v) |>
+  gdalcubes::select_bands("DSWRF") |>  
+  animate( col = viridisLite::viridis, nbreaks=100, 
+           fps=10, save_as = "weather.gif")
+```
+
+![](weather.gif)
