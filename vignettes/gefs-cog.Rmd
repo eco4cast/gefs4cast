@@ -55,7 +55,7 @@ significant bandwidth and processing power are available, but reasonably crude.
 
 
 ```r
-date <- as.Date("2022-05-05") #Sys.Date()
+date <- as.Date("2022-12-05") #Sys.Date()
 gefsdir <- tempfile()
 ## 3-hr period up to 10 days, (then every 6 hrs up to 35 day horizon)
 gefs_cog(gefsdir, ens_avg=TRUE,
@@ -65,7 +65,7 @@ gefs_cog(gefsdir, ens_avg=TRUE,
 
 ```
 ##    user  system elapsed 
-## 134.211  16.967  13.539
+## 107.603  14.016   8.860
 ```
 
 With our 80 files in hand, it is time to assemble them into a multi-band 
@@ -210,7 +210,7 @@ are in day and night:
 raster_cube(gefs_cube, v) |>
   gdalcubes::select_bands("DSWRF") |>  
   animate( col = viridisLite::viridis, nbreaks=100, 
-           fps=10, save_as = "dswrf.gif")
+           fps=2, save_as = "dswrf.gif")
 ```
 
 ```
