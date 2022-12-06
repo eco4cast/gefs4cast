@@ -12,16 +12,17 @@ NOAA Global Ensemble Forecast System which can be used as driver data for
 forecasts anywhere in the world. 
 
 
-```{r opts}
+
+```r
 knitr::opts_chunk$set(message=FALSE, warning=FALSE)
-knitr::opts_chunk(cache=TRUE)
 ```
 
 
 In addition to this package (`gefs4cast`), this approach relies heavily on the
 amazing and innovative work of `gdalcubes`, as well as few commonly used packages.
 
-```{r setup}
+
+```r
 library(gdalcubes) 
 library(gefs4cast) # remotes::install_github("neon4cast/gefs4cast")
 library(stringr)
@@ -52,12 +53,19 @@ converting these GRIB files to local GeoTIFF files using command-line
 significant bandwidth and processing power are available, but reasonably crude.
 
 
-```{r}
+
+```r
+date <- as.Date("2022-05-05") #Sys.Date()
 gefsdir <- tempfile()
 ## 3-hr period up to 10 days, (then every 6 hrs up to 35 day horizon)
 gefs_cog(gefsdir, ens_avg=TRUE,
-         max_horizon=240, date = Sys.Date() - 1) |>
+         max_horizon=240, date = date) |>
   system.time()
+```
+
+```
+##    user  system elapsed 
+## 134.211  16.967  13.539
 ```
 
 With our 80 files in hand, it is time to assemble them into a multi-band 
@@ -69,7 +77,8 @@ Given the band names and date range, we can use `gdalcubes` to construct an
 image collection of all 79 assets (note the horizon=0 file uses an incompatible
 band structure and is omitted here).
 
-```{r}
+
+```r
 # 000 file has different bands and so cannot be stacked into the collection
 files <- fs::dir_ls(gefsdir, type="file", recurse = TRUE)[-1]
 step <- files |> str_extract("f\\d{3}\\.tif") |> str_extract("\\d{3}") 
@@ -98,7 +107,8 @@ resolution of the data itself -- we can ask for whatever we want in defining
 this abstract box!  
 
 
-```{r}
+
+```r
 box <- sf::st_bbox(fc)
 iso <-"%Y-%m-%dT%H:%M:%S"
 ext <- list(t0 = as.character(min(datetime),iso), 
@@ -111,7 +121,6 @@ v <- cube_view(srs = "EPSG:4326",
               dt = "PT3H",   # original resolution
                aggregation = "mean", resampling = "cubicspline"
 )
-
 ```
 
 It is worth thinking about each of these elements for a moment
@@ -167,11 +176,16 @@ Crucially, calculations are also entirely streaming, and thus require very
 little RAM despite the often masssive scale of the data sets involved. 
 
 
-```{r}
+
+```r
 raster_cube(gefs_cube, v) |>
   gdalcubes::select_bands("TMP") |>
   animate( col = viridisLite::viridis, nbreaks=100,
            fps=10, save_as = "temp.gif")
+```
+
+```
+## [1] "/home/cboettig/eco4cast/gefs4cast/vignettes/temp.gif"
 ```
 
 
@@ -191,11 +205,16 @@ parallelized and high-performance operations behind the scenes.
 Downward Shortwave Radiation Flux is a good way to see what parts of the globe
 are in day and night: 
 
-```{r}
+
+```r
 raster_cube(gefs_cube, v) |>
   gdalcubes::select_bands("DSWRF") |>  
   animate( col = viridisLite::viridis, nbreaks=100, 
            fps=10, save_as = "dswrf.gif")
+```
+
+```
+## [1] "/home/cboettig/eco4cast/gefs4cast/vignettes/dswrf.gif"
 ```
 
 ![](dswrf.gif)
@@ -215,7 +234,8 @@ one at the original resolution and the other at finer spatial resolution.
 this is not necessary -- temporal interpolation does not happen automatically,
 and we can perform this step on the fly later on.)
 
-```{r}
+
+```r
 box <- c(-75, 40, -70, 44)
 ext <- list(t0 = as.character(min(datetime),iso), 
              t1 = as.character(max(datetime),iso),
@@ -242,43 +262,71 @@ v_fine <- cube_view(srs = "EPSG:4326",
 For reference, let's first see what the raw data looks like at this level:
 
 
-```{r}
+
+```r
+t <- as.character(datetime[[3]], iso)
+t
+```
+
+```
+## [1] "2022-12-06T09:00:00"
+```
+
+```r
 raster_cube(gefs_cube, v_orig) |> 
    gdalcubes::select_bands("TMP") |> 
-   slice_time(datetime = "2022-12-05 06:00:00") |>
+   slice_time(datetime = t) |>
    st_as_stars() |> 
    tm_shape() + tm_raster(palette=viridis(100), n = 100, 
                           legend.show=FALSE, style = "cont") +
    tm_shape(spData::us_states) + tm_polygons(alpha=0, border.col = "grey")
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+
 ## Temporal interpolation
 
 
-```{r}
+
+```r
 raster_cube(gefs_cube, v_fine) |> 
    gdalcubes::select_bands("TMP") |> 
-   slice_time(datetime = "2022-12-05 06:00:00") |>
+   slice_time(datetime = t) |>
    st_as_stars() |> 
    tm_shape() + tm_raster(palette=viridis(100), n = 100,
                           legend.show=FALSE, style = "cont") +
    tm_shape(spData::us_states) + tm_polygons(alpha=0, border.col = "grey")
 ```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
 Temporal interpolation is not performed by default, but we can interpolate 
 data to an arbitrarily finer timescale.  (Note that if we did not `fill_time()`,
 the result would be all-missing temp data.  Meanwhile, also note we can ask 
 for an arbitrarily fine time scale here, and do so on the `v_orig` data as well.)
 
-```{r}
+
+```r
+# an intermediate time:
+t2 <- as.character(as_datetime(t) + minutes(30),  iso)
+t2 
+```
+
+```
+## [1] "2022-12-06T09:30:00"
+```
+
+```r
 raster_cube(gefs_cube, v_fine) |> 
    gdalcubes::select_bands("TMP") |> 
    gdalcubes::fill_time("linear") |>
-   slice_time(datetime = "2022-12-05 06:30:00") |>
+   slice_time(datetime = t2) |>
    st_as_stars() |> 
    tm_shape() + tm_raster(palette=viridis(100), n = 100,
                           legend.show=FALSE, style = "cont") +
    tm_shape(spData::us_states) + tm_polygons(alpha=0, border.col = "grey")
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 As illustrated in these examples, any data cube can be coerced into a stars object,
 and we can use all the classic manipulation techniques available in stars, e.g.
@@ -287,11 +335,18 @@ We then use classic tidyverse to pivot the resulting array into a simple data.fr
 of `site_id`,  `datetime`, `predicted`, and `variable` for the chosen reference
 datetime here.
 
-```{r}
+
+```r
 sites <- neon_coordinates() |>
   tibble::as_tibble(rownames = "site_id") |>
   sf::st_as_sf(coords= c("longitude", "latitude"), crs="EPSG:4326") 
+```
 
+```
+## Error in neon_coordinates(): could not find function "neon_coordinates"
+```
+
+```r
 # We can need to extract band-wise, (or datetime-wise)
 # we get an sf object with timestamps as columns
 library(tidyverse)
@@ -311,21 +366,31 @@ extract_by_band <- function(band, cube, sites){
 
 cube <- raster_cube(gefs_cube, v) |> st_as_stars()
 df <- map_dfr(bandnames, extract_by_band, cube=cube, sites)
+```
+
+```
+## Error in stopifnot(inherits(at, c("sf", "sfc", "matrix"))): object 'sites' not found
+```
+
+```r
 df
 ```
 
-
-
-
-```{r include=FALSE, eval=FALSE}
-# for time slice: we get an `sf` object back with variables as columns, 
-# space (points) as rows
-neon <- raster_cube(gefs_cube, v) |> 
-       slice_time(datetime = "2022-12-05 06:00:00") |>
-       st_as_stars() |>
-       st_extract(sites) # use st_coordinates(sites) for simple array
-
 ```
+## function (x, df1, df2, ncp, log = FALSE) 
+## {
+##     if (missing(ncp)) 
+##         .Call(C_df, x, df1, df2, log)
+##     else .Call(C_dnf, x, df1, df2, ncp, log)
+## }
+## <bytecode: 0x556455e26108>
+## <environment: namespace:stats>
+```
+
+
+
+
+
 
 Working directly with the gdalcube however, we can already
 also perform much richer calculations with `reduce_time`, `reduce_space`,
