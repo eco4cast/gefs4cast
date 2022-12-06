@@ -14,6 +14,7 @@ forecasts anywhere in the world.
 
 ```{r opts}
 knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+knitr::opts_chunk(cache=TRUE)
 ```
 
 
@@ -280,31 +281,53 @@ raster_cube(gefs_cube, v_fine) |>
 ```
 
 As illustrated in these examples, any data cube can be coerced into a stars object,
-and we can use all the classic manipulation techniques available in stars.
+and we can use all the classic manipulation techniques available in stars, e.g.
+to extract values at particular set of spatial points over all time.
+We then use classic tidyverse to pivot the resulting array into a simple data.frame
+of `site_id`,  `datetime`, `predicted`, and `variable` for the chosen reference
+datetime here.
 
 ```{r}
 sites <- neon_coordinates() |>
-  tibble::as_tibble() |>
-  st_as_sf(coords= c("longitude", "latitude"), crs="EPSG:4326") #|>
- # st_as_sfc()
+  tibble::as_tibble(rownames = "site_id") |>
+  sf::st_as_sf(coords= c("longitude", "latitude"), crs="EPSG:4326") 
 
+# We can need to extract band-wise, (or datetime-wise)
+# we get an sf object with timestamps as columns
+library(tidyverse)
+extract_by_band <- function(band, cube, sites){ 
+  datetime <- st_get_dimension_values(cube, "time")
+  y <- cube[band,,,] |>
+    split("time") |> 
+    st_extract(sites)
+  
+  colnames(y) <- c(as.character(datetime), "geometry")
+  y <- y |> st_join(sites)
+  
+  y |> as_tibble() |> select(-geometry) |> 
+  pivot_longer(-site_id, names_to = "datetime", values_to="predicted") |>
+  mutate(variable=band)
+}
+
+cube <- raster_cube(gefs_cube, v) |> st_as_stars()
+df <- map_dfr(bandnames, extract_by_band, cube=cube, sites)
+df
+```
+
+
+
+
+```{r include=FALSE, eval=FALSE}
+# for time slice: we get an `sf` object back with variables as columns, 
+# space (points) as rows
 neon <- raster_cube(gefs_cube, v) |> 
        slice_time(datetime = "2022-12-05 06:00:00") |>
        st_as_stars() |>
        st_extract(sites) # use st_coordinates(sites) for simple array
 
-
-y <-  raster_cube(gefs_cube, v) |> 
-      gdalcubes::select_bands("TMP") |> 
-      st_as_stars() |> 
-      split() |> 
-      st_extract(sites) |> 
-      st_join(sites)
-
-#rows are sites, time 
 ```
 
-
-We can also perform much richer calculations with `reduce_time`, `reduce_space`,
+Working directly with the gdalcube however, we can already
+also perform much richer calculations with `reduce_time`, `reduce_space`,
 `pixel_apply`, `chunk_apply` and other functions of the gdalcubes packages.
 
