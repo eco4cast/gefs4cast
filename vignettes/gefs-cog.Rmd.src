@@ -13,7 +13,7 @@ forecasts anywhere in the world.
 
 
 ```{r opts}
-knitr::opts_chunk$set(message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.path = "../man/figures")
 ```
 
 
@@ -242,7 +242,7 @@ v_fine <- cube_view(srs = "EPSG:4326",
 For reference, let's first see what the raw data looks like at this level:
 
 
-```{r}
+```{r tmap_orig}
 t <- as.character(datetime[[3]], iso)
 t
 raster_cube(gefs_cube, v_orig) |> 
@@ -257,7 +257,7 @@ raster_cube(gefs_cube, v_orig) |>
 ## Temporal interpolation
 
 
-```{r}
+```{r tmap_fine}
 raster_cube(gefs_cube, v_fine) |> 
    gdalcubes::select_bands("TMP") |> 
    slice_time(datetime = t) |>
@@ -271,7 +271,7 @@ data to an arbitrarily finer timescale.  (Note that if we did not `fill_time()`,
 the result would be all-missing temp data.  Meanwhile, also note we can ask 
 for an arbitrarily fine time scale here, and do so on the `v_orig` data as well.)
 
-```{r}
+```{r tmap_time}
 
 # an intermediate time:
 t2 <- as.character(as_datetime(t) + minutes(30),  iso)
