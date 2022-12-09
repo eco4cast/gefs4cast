@@ -13,7 +13,7 @@ forecasts anywhere in the world.
 
 
 ```{r opts}
-knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.path = "../man/figures")
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, fig.path = "vignettes/")
 ```
 
 
@@ -31,6 +31,9 @@ library(tmap)
 
 gdalcubes_options(parallel = 24)
 ```
+
+
+## Accessing GEFS data
 
 First, we use `gefs4cast` to download the GEFS average forecast for the next 10 days.
 While it is possible to download each of the ensemble members individually, and also
@@ -85,6 +88,7 @@ gefs_cube <- create_image_collection(files,
                                      date_time = datetime, 
                                      band_names = bandnames)
 ```
+## Constructing a cube view
 
 Second, we can create an entirely abstract "cube view" representing our desired
 spatial and temporal resolution.  For the moment, we simply use the full time
@@ -159,6 +163,9 @@ an optional `mask` argument allowing bad pixels such as cloud cover to be remove
 and then automatically filled in by the aggregation method from any overlapping
 images within the specified time interval.
 
+## Applying our cube view to the GEFS data
+
+
 Let's take a look at the temperature data cube now.  Animations provide
 a natural way to visualize spatio-temporal data, and are easy to produce.
 All `gdalcubes` calculations are lazy-evaluated, so that calculations are 
@@ -202,7 +209,7 @@ raster_cube(gefs_cube, v) |>
 
 
 
-## Downscaling to finer resolution
+### Downscaling to finer resolution
 
 GEFS predictions are relatively coarse in space.  For EFI terrestrial forecast,
 finer temporal scales may also be desirable, such as for driving the 30min
@@ -254,7 +261,7 @@ raster_cube(gefs_cube, v_orig) |>
    tm_shape(spData::us_states) + tm_polygons(alpha=0, border.col = "grey")
 ```
 
-## Temporal interpolation
+### Temporal interpolation
 
 
 ```{r tmap_fine}
@@ -299,6 +306,37 @@ sites <- neon_coordinates() |>
   tibble::as_tibble(rownames = "site_id") |>
   sf::st_as_sf(coords= c("longitude", "latitude"), crs="EPSG:4326") 
 
+df <- raster_cube(gefs_cube, v) |> extract_geom(sites)
+```
+
+## Extracting values
+
+
+`extract_geom()` returns a data.frame with columns for time, feature ID
+(`FID`, i.e. row-number matching the polygon for the site), and columns
+for each band.  We can easily pivot this into Ecological Forecasting Initiative
+(EFI) format. 
+
+```{r}
+library(tidyverse)
+fc <- sites |> 
+  tibble::rowid_to_column(var="FID") |> 
+  inner_join(df) |> 
+  as_tibble() |>
+  select(-FID, -geometry) |>
+  pivot_longer(c(-time, -site_id), 
+               names_to="variable", 
+               values_to="prediction")
+
+head(fc)
+```
+
+
+
+
+```{r include=FALSE, eval=FALSE}
+## pure stars method is much more ugly
+
 # We can need to extract band-wise, (or datetime-wise)
 # we get an sf object with timestamps as columns
 library(tidyverse)
@@ -319,18 +357,6 @@ extract_by_band <- function(band, cube, sites){
 cube <- raster_cube(gefs_cube, v) |> st_as_stars()
 df <- map_dfr(bandnames, extract_by_band, cube=cube, sites)
 df
-```
-
-
-
-
-```{r include=FALSE, eval=FALSE}
-# for time slice: we get an `sf` object back with variables as columns, 
-# space (points) as rows
-neon <- raster_cube(gefs_cube, v) |> 
-       slice_time(datetime = t) |>
-       st_as_stars() |>
-       st_extract(sites) # use st_coordinates(sites) for simple array
 
 ```
 

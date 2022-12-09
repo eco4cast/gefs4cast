@@ -74,7 +74,7 @@
 from the NOAA Global Ensemble Forecast System which can be used as
 driver data for forecasts anywhere in the world.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>message<span class="op">=</span><span class="cn">FALSE</span>, warning<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/knitr/man/opts_chunk.html" class="external-link">opts_chunk</a></span><span class="op">$</span><span class="fu">set</span><span class="op">(</span>message<span class="op">=</span><span class="cn">FALSE</span>, warning<span class="op">=</span><span class="cn">FALSE</span>, fig.path <span class="op">=</span> <span class="st">"man/figures/"</span><span class="op">)</span></span></code></pre></div>
 <p>In addition to this package (<code>gefs4cast</code>), this approach
 relies heavily on the amazing and innovative work of
 <code>gdalcubes</code>, as well as few commonly used packages.</p>
@@ -88,6 +88,9 @@ relies heavily on the amazing and innovative work of
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/r-tmap/tmap" class="external-link">tmap</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/gdalcubes_options.html" class="external-link">gdalcubes_options</a></span><span class="op">(</span>parallel <span class="op">=</span> <span class="fl">24</span><span class="op">)</span></span></code></pre></div>
+<div class="section level2">
+<h2 id="accessing-gefs-data">Accessing GEFS data<a class="anchor" aria-label="anchor" href="#accessing-gefs-data"></a>
+</h2>
 <p>First, we use <code>gefs4cast</code> to download the GEFS average
 forecast for the next 10 days. While it is possible to download each of
 the ensemble members individually, and also possible to access forecasts
@@ -113,7 +116,11 @@ processing power are available, but reasonably crude.</p>
 <span>         max_horizon<span class="op">=</span><span class="fl">240</span>, date <span class="op">=</span> <span class="va">date</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##    user  system elapsed </span></span>
-<span><span class="co">## 102.074  13.864   9.165</span></span></code></pre>
+<span><span class="co">## 101.574  13.401   9.399</span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="constructing-a-data-cube">Constructing a data cube<a class="anchor" aria-label="anchor" href="#constructing-a-data-cube"></a>
+</h2>
 <p>With our 80 files in hand, it is time to assemble them into a
 multi-band “data cube”. We specify the datetimes by parsing the horizon
 notation from the filename and the bands from the encoded file
@@ -137,6 +144,10 @@ omitted here).</p>
 <span><span class="va">gefs_cube</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/create_image_collection.html" class="external-link">create_image_collection</a></span><span class="op">(</span><span class="va">files</span>,</span>
 <span>                                     date_time <span class="op">=</span> <span class="va">datetime</span>, </span>
 <span>                                     band_names <span class="op">=</span> <span class="va">bandnames</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="constructing-a-cube-view">Constructing a cube view<a class="anchor" aria-label="anchor" href="#constructing-a-cube-view"></a>
+</h2>
 <p>Second, we can create an entirely abstract “cube view” representing
 our desired spatial and temporal resolution. For the moment, we simply
 use the full time and space range of the assets, as well as the original
@@ -207,6 +218,10 @@ mosiacs work equally well, with an optional <code>mask</code> argument
 allowing bad pixels such as cloud cover to be removed, and then
 automatically filled in by the aggregation method from any overlapping
 images within the specified time interval.</p>
+</div>
+<div class="section level2">
+<h2 id="applying-our-cube-view-to-the-gefs-data">Applying our cube view to the GEFS data<a class="anchor" aria-label="anchor" href="#applying-our-cube-view-to-the-gefs-data"></a>
+</h2>
 <p>Let’s take a look at the temperature data cube now. Animations
 provide a natural way to visualize spatio-temporal data, and are easy to
 produce. All <code>gdalcubes</code> calculations are lazy-evaluated, so
@@ -219,7 +234,6 @@ masssive scale of the data sets involved.</p>
 <span>  <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/select_bands.html" class="external-link">select_bands</a></span><span class="op">(</span><span class="st">"TMP"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/animate.html" class="external-link">animate</a></span><span class="op">(</span> col <span class="op">=</span> <span class="fu">viridisLite</span><span class="fu">::</span><span class="va"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridis</a></span>, nbreaks<span class="op">=</span><span class="fl">100</span>,</span>
 <span>           fps<span class="op">=</span><span class="fl">10</span>, save_as <span class="op">=</span> <span class="st">"temp.gif"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/home/cboettig/eco4cast/gefs4cast/vignettes/temp.gif"</span></span></code></pre>
 <p><img src="temp.gif"></p>
 <p>Because the <code>cube_view</code> specification is completely
 <strong>abstract</strong> and distinct from the data assets, we can
@@ -231,13 +245,14 @@ averaging or interpolating is all baked into the abstraction and handled
 in parallelized and high-performance operations behind the scenes.</p>
 <p>Downward Shortwave Radiation Flux is a good way to see what parts of
 the globe are in day and night:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/select_bands.html" class="external-link">select_bands</a></span><span class="op">(</span><span class="st">"DSWRF"</span><span class="op">)</span> <span class="op">|&gt;</span>  </span>
 <span>  <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/animate.html" class="external-link">animate</a></span><span class="op">(</span> col <span class="op">=</span> <span class="fu">viridisLite</span><span class="fu">::</span><span class="va"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridis</a></span>, nbreaks<span class="op">=</span><span class="fl">100</span>, </span>
 <span>           fps<span class="op">=</span><span class="fl">2</span>, save_as <span class="op">=</span> <span class="st">"dswrf.gif"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] "/home/cboettig/eco4cast/gefs4cast/vignettes/dswrf.gif"</span></span></code></pre>
 <p><img src="dswrf.gif"></p>
+</div>
 <div class="section level2">
 <h2 id="downscaling-to-finer-resolution">Downscaling to finer resolution<a class="anchor" aria-label="anchor" href="#downscaling-to-finer-resolution"></a>
 </h2>
@@ -252,7 +267,7 @@ resolution and the other at finer spatial resolution. (While it is
 possible to use a finer temporal resolution as well, as shown, this is
 not necessary – temporal interpolation does not happen automatically,
 and we can perform this step on the fly later on.)</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">box</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">75</span>, <span class="fl">40</span>, <span class="op">-</span><span class="fl">70</span>, <span class="fl">44</span><span class="op">)</span></span>
 <span><span class="va">ext</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>t0 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">datetime</span><span class="op">)</span>,<span class="va">iso</span><span class="op">)</span>, </span>
 <span>             t1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">datetime</span><span class="op">)</span>,<span class="va">iso</span><span class="op">)</span>,</span>
@@ -276,11 +291,11 @@ and we can perform this step on the fly later on.)</p>
 <span>    <span class="op">)</span></span></code></pre></div>
 <p>For reference, let’s first see what the raw data looks like at this
 level:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">datetime</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span>, <span class="va">iso</span><span class="op">)</span></span>
 <span><span class="va">t</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2022-12-07T09:00:00"</span></span></code></pre>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<pre><code><span><span class="co">## [1] "2022-12-09T09:00:00"</span></span></code></pre>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v_orig</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/select_bands.html" class="external-link">select_bands</a></span><span class="op">(</span><span class="st">"TMP"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/slice_time.html" class="external-link">slice_time</a></span><span class="op">(</span>datetime <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -289,13 +304,13 @@ level:</p>
 <span>                          legend.show<span class="op">=</span><span class="cn">FALSE</span>, style <span class="op">=</span> <span class="st">"cont"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_shape.html" class="external-link">tm_shape</a></span><span class="op">(</span><span class="fu">spData</span><span class="fu">::</span><span class="va"><a href="https://jakubnowosad.com/spData/reference/us_states.html" class="external-link">us_states</a></span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_polygons.html" class="external-link">tm_polygons</a></span><span class="op">(</span>alpha<span class="op">=</span><span class="fl">0</span>, border.col <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figure/unnamed-chunk-7-1.png" alt=""><p class="caption">plot of chunk unnamed-chunk-7</p>
+<img src="tmap_orig-1.png" alt=""><p class="caption">plot of chunk tmap_orig</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="temporal-interpolation">Temporal interpolation<a class="anchor" aria-label="anchor" href="#temporal-interpolation"></a>
 </h2>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v_fine</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/select_bands.html" class="external-link">select_bands</a></span><span class="op">(</span><span class="st">"TMP"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/slice_time.html" class="external-link">slice_time</a></span><span class="op">(</span>datetime <span class="op">=</span> <span class="va">t</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -303,18 +318,20 @@ level:</p>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_shape.html" class="external-link">tm_shape</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_raster.html" class="external-link">tm_raster</a></span><span class="op">(</span>palette<span class="op">=</span><span class="fu"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridis</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                          legend.show<span class="op">=</span><span class="cn">FALSE</span>, style <span class="op">=</span> <span class="st">"cont"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_shape.html" class="external-link">tm_shape</a></span><span class="op">(</span><span class="fu">spData</span><span class="fu">::</span><span class="va"><a href="https://jakubnowosad.com/spData/reference/us_states.html" class="external-link">us_states</a></span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_polygons.html" class="external-link">tm_polygons</a></span><span class="op">(</span>alpha<span class="op">=</span><span class="fl">0</span>, border.col <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="figure/unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8"> Temporal interpolation is not
-performed by default, but we can interpolate data to an arbitrarily
-finer timescale. (Note that if we did not <code><a href="https://rdrr.io/pkg/gdalcubes/man/fill_time.html" class="external-link">fill_time()</a></code>, the
-result would be all-missing temp data. Meanwhile, also note we can ask
-for an arbitrarily fine time scale here, and do so on the
-<code>v_orig</code> data as well.)</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="figure">
+<img src="tmap_fine-1.png" alt=""><p class="caption">plot of chunk tmap_fine</p>
+</div>
+<p>Temporal interpolation is not performed by default, but we can
+interpolate data to an arbitrarily finer timescale. (Note that if we did
+not <code><a href="https://rdrr.io/pkg/gdalcubes/man/fill_time.html" class="external-link">fill_time()</a></code>, the result would be all-missing temp data.
+Meanwhile, also note we can ask for an arbitrarily fine time scale here,
+and do so on the <code>v_orig</code> data as well.)</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># an intermediate time:</span></span>
 <span><span class="va">t2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_datetime</a></span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html" class="external-link">minutes</a></span><span class="op">(</span><span class="fl">30</span><span class="op">)</span>,  <span class="va">iso</span><span class="op">)</span></span>
 <span><span class="va">t2</span> </span></code></pre></div>
-<pre><code><span><span class="co">## [1] "2022-12-07T09:30:00"</span></span></code></pre>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<pre><code><span><span class="co">## [1] "2022-12-09T09:30:00"</span></span></code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v_fine</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/select_bands.html" class="external-link">select_bands</a></span><span class="op">(</span><span class="st">"TMP"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>   <span class="fu">gdalcubes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/fill_time.html" class="external-link">fill_time</a></span><span class="op">(</span><span class="st">"linear"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -323,9 +340,11 @@ for an arbitrarily fine time scale here, and do so on the
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_shape.html" class="external-link">tm_shape</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_raster.html" class="external-link">tm_raster</a></span><span class="op">(</span>palette<span class="op">=</span><span class="fu"><a href="https://sjmgarnier.github.io/viridisLite/reference/viridis.html" class="external-link">viridis</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                          legend.show<span class="op">=</span><span class="cn">FALSE</span>, style <span class="op">=</span> <span class="st">"cont"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>   <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_shape.html" class="external-link">tm_shape</a></span><span class="op">(</span><span class="fu">spData</span><span class="fu">::</span><span class="va"><a href="https://jakubnowosad.com/spData/reference/us_states.html" class="external-link">us_states</a></span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/pkg/tmap/man/tm_polygons.html" class="external-link">tm_polygons</a></span><span class="op">(</span>alpha<span class="op">=</span><span class="fl">0</span>, border.col <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="figure/unnamed-chunk-9-1.png" alt=""><p class="caption">plot of chunk unnamed-chunk-9</p>
+<p><img src="tmap_time-1.png"></p>
 </div>
+<div class="section level2">
+<h2 id="extracting-values">Extracting values<a class="anchor" aria-label="anchor" href="#extracting-values"></a>
+</h2>
 <p>As illustrated in these examples, any data cube can be coerced into a
 stars object, and we can use all the classic manipulation techniques
 available in stars, e.g. to extract values at particular set of spatial
@@ -333,42 +352,37 @@ points over all time. We then use classic tidyverse to pivot the
 resulting array into a simple data.frame of <code>site_id</code>,
 <code>datetime</code>, <code>predicted</code>, and <code>variable</code>
 for the chosen reference datetime here.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/neon_coordinates.html">neon_coordinates</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span>rownames <span class="op">=</span> <span class="st">"site_id"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"longitude"</span>, <span class="st">"latitude"</span><span class="op">)</span>, crs<span class="op">=</span><span class="st">"EPSG:4326"</span><span class="op">)</span> </span></code></pre></div>
-<pre><code><span><span class="co">## Error in neon_coordinates(): could not find function "neon_coordinates"</span></span></code></pre>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># We can need to extract band-wise, (or datetime-wise)</span></span>
-<span><span class="co"># we get an sf object with timestamps as columns</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
-<span><span class="va">extract_by_band</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">band</span>, <span class="va">cube</span>, <span class="va">sites</span><span class="op">)</span><span class="op">{</span> </span>
-<span>  <span class="va">datetime</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-spatial.github.io/stars/reference/st_dimensions.html" class="external-link">st_get_dimension_values</a></span><span class="op">(</span><span class="va">cube</span>, <span class="st">"time"</span><span class="op">)</span></span>
-<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">cube</span><span class="op">[</span><span class="va">band</span>,,,<span class="op">]</span> <span class="op">|&gt;</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/split.html" class="external-link">split</a></span><span class="op">(</span><span class="st">"time"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>    <span class="fu"><a href="https://r-spatial.github.io/stars/reference/st_extract.html" class="external-link">st_extract</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">datetime</span><span class="op">)</span>, <span class="st">"geometry"</span><span class="op">)</span></span>
-<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="va">y</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_join.html" class="external-link">st_join</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span></span>
-<span>  </span>
-<span>  <span class="va">y</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">geometry</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span><span class="op">-</span><span class="va">site_id</span>, names_to <span class="op">=</span> <span class="st">"datetime"</span>, values_to<span class="op">=</span><span class="st">"predicted"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>variable<span class="op">=</span><span class="va">band</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
+<span>  <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span>coords<span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"longitude"</span>, <span class="st">"latitude"</span><span class="op">)</span>, crs<span class="op">=</span><span class="st">"EPSG:4326"</span><span class="op">)</span> </span>
 <span></span>
-<span><span class="va">cube</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://r-spatial.github.io/stars/reference/st_as_stars.html" class="external-link">st_as_stars</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dfr</a></span><span class="op">(</span><span class="va">bandnames</span>, <span class="va">extract_by_band</span>, cube<span class="op">=</span><span class="va">cube</span>, <span class="va">sites</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Error in stopifnot(inherits(at, c("sf", "sfc", "matrix"))): object 'sites' not found</span></span></code></pre>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span></span></code></pre></div>
-<pre><code><span><span class="co">## function (x, df1, df2, ncp, log = FALSE) </span></span>
-<span><span class="co">## {</span></span>
-<span><span class="co">##     if (missing(ncp)) </span></span>
-<span><span class="co">##         .Call(C_df, x, df1, df2, log)</span></span>
-<span><span class="co">##     else .Call(C_dnf, x, df1, df2, ncp, log)</span></span>
-<span><span class="co">## }</span></span>
-<span><span class="co">## &lt;bytecode: 0x55645a099be0&gt;</span></span>
-<span><span class="co">## &lt;environment: namespace:stats&gt;</span></span></code></pre>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/raster_cube.html" class="external-link">raster_cube</a></span><span class="op">(</span><span class="va">gefs_cube</span>, <span class="va">v</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/pkg/gdalcubes/man/extract_geom.html" class="external-link">extract_geom</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="https://rdrr.io/pkg/gdalcubes/man/extract_geom.html" class="external-link">extract_geom()</a></code> returns a data.frame with columns for
+time, feature ID (<code>FID</code>, i.e. row-number matching the polygon
+for the site), and columns for each band. We can easily pivot this into
+Ecological Forecasting Initiative (EFI) format.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span>
+<span><span class="va">fc</span> <span class="op">&lt;-</span> <span class="va">sites</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/rownames.html" class="external-link">rowid_to_column</a></span><span class="op">(</span>var<span class="op">=</span><span class="st">"FID"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">inner_join</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">FID</span>, <span class="op">-</span><span class="va">geometry</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/pivot_longer.html" class="external-link">pivot_longer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="va">time</span>, <span class="op">-</span><span class="va">site_id</span><span class="op">)</span>, </span>
+<span>               names_to<span class="op">=</span><span class="st">"variable"</span>, </span>
+<span>               values_to<span class="op">=</span><span class="st">"prediction"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">fc</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## # A tibble: 6 × 4</span></span>
+<span><span class="co">##   site_id time                variable prediction</span></span>
+<span><span class="co">##   &lt;chr&gt;   &lt;chr&gt;               &lt;chr&gt;         &lt;dbl&gt;</span></span>
+<span><span class="co">## 1 LIRO    2022-12-10T15:00:00 APCP            0  </span></span>
+<span><span class="co">## 2 LIRO    2022-12-10T15:00:00 DLWRF         185. </span></span>
+<span><span class="co">## 3 LIRO    2022-12-10T15:00:00 DSWRF          37.2</span></span>
+<span><span class="co">## 4 LIRO    2022-12-10T15:00:00 PRES        96120. </span></span>
+<span><span class="co">## 5 LIRO    2022-12-10T15:00:00 RH             76.3</span></span>
+<span><span class="co">## 6 LIRO    2022-12-10T15:00:00 TMP           -10.1</span></span></code></pre>
 <p>Working directly with the gdalcube however, we can already also
 perform much richer calculations with <code>reduce_time</code>,
 <code>reduce_space</code>, <code>pixel_apply</code>,
