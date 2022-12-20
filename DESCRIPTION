@@ -1,6 +1,6 @@
 Package: gefs4cast
 Title: Cloud-native Workflows for NOAA Global Ensemble Forecast System Files
-Version: 0.0.0.9900
+Version: 0.0.1
 Authors@R: c(person(
               "Carl", "Boettiger", 
               email = "cboettig@gmail.com", 
@@ -18,7 +18,7 @@ Description: Cloud-native utilites to access and parse Global Ensemble Forecast
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 SystemRequirements: GDAL >= 3.4.0
 Suggests: 
     knitr,

@@ -9,7 +9,7 @@ gdal_download <- function(src,
                           gdal_ops = "-co compress=zstd"
 ) {
   
-  GDAL_BIN <- Sys.getenv('GDAL_BIN', "/usr/local/bin/")
+  GDAL_BIN <- Sys.getenv('GDAL_BIN', "")
   
   gdal <- paste(paste0(GDAL_BIN,
                        "gdal_translate"), 
@@ -26,7 +26,7 @@ gdal_download <- function(src,
   shell <- "src.sh"
   cmd <- c(cmd, "wait", "echo 'Finshed!'")
   readr::write_lines(cmd, shell)
-  p <- processx::run("/usr/bin/bash", shell)
+  p <- processx::run("bash", shell)
   
   unlink(shell)
   invisible(p)
@@ -34,7 +34,7 @@ gdal_download <- function(src,
 
 
 assert_gdal <- function() {
-  GDAL_BIN <- Sys.getenv('GDAL_BIN', "/usr/local/bin/")
+  GDAL_BIN <- Sys.getenv('GDAL_BIN', "")
   
   x <- processx::run(paste0(GDAL_BIN, "gdalinfo"), "--version")
   version <- gsub("GDAL (\\d\\.\\d\\.\\d), .*", "\\1", x$stdout)
