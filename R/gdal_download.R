@@ -11,6 +11,7 @@ gdal_download <- function(src,
   
   GDAL_BIN <- Sys.getenv('GDAL_BIN', "")
   
+  assert_gdal()
   gdal <- paste(paste0(GDAL_BIN,
                        "gdal_translate"), 
                 gdal_ops,
