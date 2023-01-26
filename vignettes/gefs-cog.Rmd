@@ -87,7 +87,7 @@ band structure and is omitted here).
 # 000 file has different bands and so cannot be stacked into the collection
 files <- fs::dir_ls(gefsdir, type="file", recurse = TRUE)[-1]
 step <- files |> str_extract("f\\d{3}\\.tif") |> str_extract("\\d{3}") 
-datetime <- Sys.Date() + hours(step) 
+datetime <- date + hours(step) 
 
 # pull band names out with stars, hack the timestamp off of the band name
 fc <- stars::read_stars(files[1]) 
