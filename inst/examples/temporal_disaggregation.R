@@ -88,7 +88,7 @@ disaggregate2hourly <- function(df){
            RH =  imputeTS::na_interpolation(RH, option = "linear"),
            TMP =  imputeTS::na_interpolation(TMP, option = "linear"),
            UGRD =  imputeTS::na_interpolation(UGRD, option = "linear"),
-           VGRD =  imputeTS::na_interpolation(UGRD, option = "linear")) |>
+           VGRD =  imputeTS::na_interpolation(VGRD, option = "linear")) |>
     ungroup() |>
     tidyr::pivot_longer(-c("site_id", "family", "parameter", "datetime", "longitude", "latitude", "reference_datetime"), names_to = "variable", values_to = "prediction") |> 
     group_by(site_id, variable, family, parameter) |> 
