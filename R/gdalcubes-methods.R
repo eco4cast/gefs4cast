@@ -25,7 +25,7 @@ grib_extract <-function(ens,
                         cycle = "00",
 
                         ...) {
-
+  date <- lubridate::as_date(date)
   view <- gefs_view(date, ...)
   gefs_grib_collection(ens, date, horizon, cycle) |>
     gdalcubes::raster_cube(view) |>
@@ -92,7 +92,7 @@ gefs_grib_collection <- function(ens,
 #'
 #' @export
 gefs_view <- function (t0 = Sys.Date(),
-                       t1 = t0 + 35L - lubridate::seconds(1),
+                       t1 = as.Date(t0) + 35L - lubridate::seconds(1),
                        box = gefs_bbox(),
                        dx = 0.5,
                        dy = 0.5,
@@ -100,6 +100,8 @@ gefs_view <- function (t0 = Sys.Date(),
                        crs = "EPSG:4326",
                         ...
 ) {
+  t0 <- lubridate::as_datetime(t0)
+  t1 <- lubridate::as_datetime(t1)
   gdalcubes::cube_view(srs = crs,
             extent = list(left = box[1], right = box[3],
                           top = box[4], bottom = box[2],
