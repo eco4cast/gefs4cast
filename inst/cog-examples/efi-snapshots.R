@@ -8,7 +8,6 @@
 # Partition: gefs/stage1/reference_datetime/site
 # Schema:
 
-library(gefs4cast)
 library(gdalcubes)
 library(parallel)
 library(dplyr)
@@ -31,8 +30,8 @@ cores <- length(ensemble)
 dates <- seq(as.Date("2022-01-01"), Sys.Date()-1, by=1)
 bench::bench_time({
   for(date in dates) {
-    lapply(ensemble, grib_extract, date = date, sites = sf_sites) >
-    efi_format_cubeextract(sf_sites) |>
+    dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
+    dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
     dplyr::mutate(family = "normal") |>
     arrow::write_dataset(s3_dir,
                        partitioning = c("reference_datetime", "site_id"))

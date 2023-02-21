@@ -1,6 +1,6 @@
 
 
-efi_format_cubeextract <- function(dfs, sf_sites = neon_sites()) {
+efi_format_cubeextract <- function(dfs, date, sf_sites = neon_sites()) {
   sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
   df <-
     purrr::list_rbind(dfs, names_to = "statistic") |>
