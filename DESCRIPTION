@@ -39,5 +39,7 @@ Imports:
     lubridate,
     tibble,
     tidyr,
-    stringi
+    stringi,
+    gdalcubes,
+    sf
 VignetteBuilder: knitr
