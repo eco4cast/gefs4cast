@@ -11,35 +11,29 @@
 library(gefs4cast)
 library(gdalcubes)
 library(parallel)
+library(dplyr)
 gdalcubes_options(parallel=TRUE)
 
+library(arrow)
+endpoint <- "https://sdsc.osn.xsede.org"
+bucket <- "bio230014-bucket01/neon4cast-drivers/noaa/gefs-v12/stage1-stats/"
+s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
+                                 access_key = Sys.getenv("OSN_KEY"),
+                                 secret_key = Sys.getenv("OSN_SECRET"))
+s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
+
 sf_sites <- neon_sites()
+#ensemble <-  paste0("gep", stringr::str_pad(1:30, 2, pad="0"))
 
-date <- as.Date("2023-02-20")
-bench::bench_time({ # 1.39 hrs for 30 ensemble members
-  view <- gefs_cube_view(date)
-  #ensemble <-  paste0("gep", stringr::str_pad(1:30, 2, pad="0"))
-  ensemble = c("geavg", "gespr") # mean and spread
-  dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
+dates <- seq(as.Date("2022-01-01"), Sys.Date()-1, by=1)
+bench::bench_time({
+  for(date in dates) {
+    ensemble <- c(mu = "geavg", sigma = "gespr") # mean and spread
+    lapply(ensemble, grib_extract, date = date, sites = sf_sites) >
+    efi_format_cubeextract(dfs, sf_sites) |>
+    dplyr::mutate(family = "normal") |>
+    arrow::write_dataset(s3_dir,
+                       partitioning = c("reference_datetime", "site_id"))
+  }
 })
-
-
-df <-
-  purrr::list_rbind(dfs, names_to = "statistic") |>
-  tibble::as_tibble() |>
-  dplyr::inner_join(df, sf_sites) |>
-  dplyr::rename("PRES"= band57,
-                "TMP" = band63,
-                "RH" = band64,
-                "UGRD" = band67,
-                "VGRD" = band68,
-                "APCP" = band69,
-                "DSWRF" = band78,
-                "DLWRF" = band79) |>
-  pivot_longer(c("PRES", "TMP", "RH", "UGRD", "VGRD", "APCP", "DSWRF", "DLWRF"),
-               names_to = "variable", values_to = "prediction")
-
-
-
-
 
