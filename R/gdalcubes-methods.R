@@ -60,8 +60,10 @@ gefs_grib_collection <- function(ens,
                                  horizon = gefs_horizon(),
                                  cycle = "00",
                                  ...) {
+  date <- lubridate::as_date(date)
+  date_time <- date + lubridate::hours(horizon)
   urls <- gefs_urls(ens, date, horizon, cycle)
-  gribs <- paste0("/viscurl/", urls)
+  gribs <- paste0("/vsicurl/", urls)
   gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
 
 }

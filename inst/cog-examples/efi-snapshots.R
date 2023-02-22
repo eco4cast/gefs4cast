@@ -16,13 +16,14 @@ gdalcubes_options(parallel=TRUE)
 devtools::load_all()
 library(arrow)
 
+Sys.setenv(VSI_CACHE="False")
 
 # can start back to 2017-01-01
-gefs_to_parquet(dates = seq(as.Date("2022-01-01"), Sys.Date()-1, by=1),
+gefs_to_parquet(dates = seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
                 ensemble = c(mu = "geavg", sigma = "gespr"),
                 gefs_s3_dir("stage1-stats"))
 
-gefs_to_parquet(dates = seq(as.Date("2022-01-01"), Sys.Date()-1, by=1),
+gefs_to_parquet(dates = seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
                 ensemble = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
                 gefs_s3_dir("stage1"))
 
