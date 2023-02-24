@@ -16,12 +16,13 @@ gefs_to_parquet <- function(dates,
   for(date in dates) {
     dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
     dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
-      dplyr::mutate(family = "normal") |>
+      dplyr::mutate(family = "spread") |>
       arrow::write_dataset(s3_dir,
                            partitioning = c("reference_datetime", "site_id"))
   }
 }
 
+# FIXME this should be gef-versioned and
 efi_format_cubeextract <- function(dfs, date, sf_sites = neon_sites()) {
   sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
   df <-
