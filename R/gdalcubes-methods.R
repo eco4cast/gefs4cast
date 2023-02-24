@@ -60,18 +60,36 @@ gefs_grib_collection <- function(ens,
                                  horizon = gefs_horizon(),
                                  cycle = "00",
                                  ...) {
-
-  date_time = date + lubridate::hours(horizon)
-  gribs <- paste0("/vsicurl/",
-                  "https://noaa-gefs-pds.s3.amazonaws.com/gefs.",
-                  format(date, "%Y%m%d"), "/00/atmos/pgrb2ap5/",
-                  ens, ".t00z.pgrb2a.0p50.f", horizon)
-
+  date <- lubridate::as_date(date)
+  date_time <- date + lubridate::hours(horizon)
+  urls <- gefs_urls(ens, date, horizon, cycle)
+  gribs <- paste0("/vsicurl/", urls)
   gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
 
 }
 
-
+# https://www.nco.ncep.noaa.gov/pmb/products/gens/
+gefs_urls <- function(ens,
+                      date = Sys.Date(),
+                      horizon = gefs_horizon(),
+                      cycle = "00",
+                      series = "atmos",
+                      resolution = "0p50",
+                      base = "https://noaa-gefs-pds.s3.amazonaws.com") {
+  date <- lubridate::as_date(date)
+  date_time <- date + lubridate::hours(horizon)
+  gribs <- paste0(
+                  base,
+                  "/gefs.",format(date, "%Y%m%d"),
+                  "/", cycle,
+                  "/",series,
+                  "/pgrb2ap5/",
+                  ens,
+                  ".t", cycle, "z.",
+                  "pgrb2a.0p50.",
+                  "f", horizon)
+  gribs
+}
 
 #' gefs_view
 #'

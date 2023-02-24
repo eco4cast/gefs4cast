@@ -2,7 +2,7 @@
 # Stage 1:
 # Compute only mean and std for every historic date
 #
-# Partition: gefs/mean/reference_datetime/site
+# Partition: gefs-v12/stage-stats/reference_datetime/site
 
 
 # Partition: gefs/stage1/reference_datetime/site
@@ -11,30 +11,25 @@
 library(gdalcubes)
 library(parallel)
 library(dplyr)
-library(arrow)
 gdalcubes_options(parallel=TRUE)
 
-library(gefs4cast)
-endpoint <- "https://sdsc.osn.xsede.org"
-bucket <- "bio230014-bucket01/neon4cast-drivers/noaa/gefs-v12/stage1-stats/"
-s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
-                                 access_key = Sys.getenv("OSN_KEY"),
-                                 secret_key = Sys.getenv("OSN_SECRET"))
-s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
+devtools::load_all()
+library(arrow)
 
-sf_sites <- neon_sites()
-#ensemble <-  paste0("gep", stringr::str_pad(1:30, 2, pad="0"))
-ensemble <- c(mu = "geavg", sigma = "gespr") # mean and spread
+sf_sites = neon_sites()
 
-cores <- length(ensemble)
-dates <- seq(as.Date("2021-01-01"), as.Date("2022-01-01")-1, by=1)
-bench::bench_time({
-  for(date in dates) {
-    dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
-    dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
-    dplyr::mutate(family = "normal") |>
-    arrow::write_dataset(s3_dir,
-                       partitioning = c("reference_datetime", "site_id"))
-  }
-})
+## Cycles & Horizons:
+# cycles 00, all horizons.
+# stage3 cycles 00, 06, 12, 18: 00, 03, 06
+# pass named vector of bands
+
+
+# can start back to 2017-01-01
+gefs_to_parquet(dates = seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
+                ensemble = c(mu = "geavg", sigma = "gespr"),
+                gefs_s3_dir("stage1-stats"), sf_sites = neon_sites())
+
+gefs_to_parquet(dates = seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
+                ensemble = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
+                gefs_s3_dir("stage1"), sf_sites = neon_sites())
 
