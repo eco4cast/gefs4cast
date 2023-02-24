@@ -1,5 +1,11 @@
 
-
+#' efi_format_cubeextract
+#'
+#' reformat results from grib_extract to EFI format
+#' @param dfs list of tables from grib_extract
+#' @param date forecast reference_datetime
+#' @param sites sites (as sf object)
+#' @export
 efi_format_cubeextract <- function(dfs, date, sf_sites = neon_sites()) {
   sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
   df <-

@@ -11,10 +11,10 @@
 library(gdalcubes)
 library(parallel)
 library(dplyr)
+library(arrow)
 gdalcubes_options(parallel=TRUE)
 
-devtools::load_all()
-library(arrow)
+library(gefs4cast)
 endpoint <- "https://sdsc.osn.xsede.org"
 bucket <- "bio230014-bucket01/neon4cast-drivers/noaa/gefs-v12/stage1-stats/"
 s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
@@ -27,7 +27,7 @@ sf_sites <- neon_sites()
 ensemble <- c(mu = "geavg", sigma = "gespr") # mean and spread
 
 cores <- length(ensemble)
-dates <- seq(as.Date("2022-01-01"), Sys.Date()-1, by=1)
+dates <- seq(as.Date("2021-01-01"), as.Date("2022-01-01")-1, by=1)
 bench::bench_time({
   for(date in dates) {
     dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)

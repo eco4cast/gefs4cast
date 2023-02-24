@@ -6,7 +6,7 @@
 \usage{
 gefs_view(
   t0 = Sys.Date(),
-  t1 = t0 + 35L - lubridate::seconds(1),
+  t1 = as.Date(t0) + 35L - lubridate::seconds(1),
   box = gefs_bbox(),
   dx = 0.5,
   dy = 0.5,
