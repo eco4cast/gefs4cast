@@ -16,7 +16,7 @@ gefs_to_parquet <- function(dates,
   for(date in dates) {
     dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
     dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
-      dplyr::mutate(family = "normal") |>
+      dplyr::mutate(family = "spread") |>
       arrow::write_dataset(s3_dir,
                            partitioning = c("reference_datetime", "site_id"))
   }
@@ -30,25 +30,29 @@ gefs_to_parquet <- function(dates,
 #' @param date forecast reference_datetime
 #' @param sites sites (as sf object)
 #' @export
-efi_format_cubeextract <- function(dfs, date, sf_sites = neon_sites()) {
+efi_format_cubeextract <- function(dfs,
+                                   date,
+                                   sf_sites = neon_sites(),
+                                   bands = c("PRES"= "band57",
+                                            "TMP" = "band63",
+                                            "RH" = "band64",
+                                            "UGRD" = "band67",
+                                            "VGRD" = "band68",
+                                            "APCP" = "band69",
+                                            "DSWRF" = "band78",
+                                            "DLWRF" = "band79")) {
   sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
+
+  vars <- names(bands)
+
   df <-
     purrr::list_rbind(dfs, names_to = "statistic") |>
     tibble::as_tibble() |>
     dplyr::inner_join(sites) |>
-    ## This mapping applies only to horizon >= 003
-    dplyr::rename("PRES"= "band57",
-                  "TMP" = "band63",
-                  "RH" = "band64",
-                  "UGRD" = "band67",
-                  "VGRD" = "band68",
-                  "APCP" = "band69",
-                  "DSWRF" = "band78",
-                  "DLWRF" = "band79") |>
+    dplyr::rename({bands}) |>
     dplyr::mutate(datetime = lubridate::as_datetime(time)) |>
     dplyr::select(-FID) |>
-    tidyr::pivot_longer(c("PRES", "TMP", "RH", "UGRD",
-                          "VGRD", "APCP", "DSWRF", "DLWRF"),
+    tidyr::pivot_longer(vars,
                         names_to = "variable", values_to = "prediction") |>
     dplyr::mutate(reference_datetime = lubridate::as_date(date),
                   horizon = datetime - lubridate::as_datetime(date))
