@@ -26,7 +26,7 @@ sf_sites = neon_sites()
 
 # can start back to 2017-01-01
 bench::bench_time({
-gefs_to_parquet(dates = Sys.Date()-1, # seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
+gefs_to_parquet(seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
                 ensemble = c(mean = "geavg", spr = "gespr"),
                 gefs_s3_dir("stage1-stats"), sf_sites = neon_sites())
 })
