@@ -8,7 +8,7 @@ grib_extract(
   ens,
   date = Sys.Date(),
   sites = neon_sites(),
-  bands = paste0("band", c(57, 63, 64, 67, 68, 69, 78, 79)),
+  bands = gefs_bands(),
   horizon = gefs_horizon(),
   cycle = "00",
   ...

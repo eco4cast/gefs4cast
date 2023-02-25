@@ -9,17 +9,37 @@ gefs_s3_dir <- function(path) {
   s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
 }
 
+
+#' gefs_to_parquet
+#'
+#' @param dates a vector of reference_datetimes
+#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
+#' @param s3_dir path to S3 directory
+#' @inheritParams grib_extract
 gefs_to_parquet <- function(dates,
                             ensemble,
                             s3_dir,
-                            sf_sites = neon_sites()) {
+                            sites = neon_sites(),
+                            bands = gefs_bands(),
+                            cycle = "00",
+                            horizon = gefs_horizon()) {
+
   for(date in dates) {
-    dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
-    dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
+    dfs <- lapply(ensemble,
+                  grib_extract,
+                  date = date,
+                  sites = sites,
+                  bands = bands,
+                  cycle = cycle,
+                  horizon = horizon)
+    dfs |>
+      efi_format_cubeextract(date = date, sites = sites) |>
       dplyr::mutate(family = "spread") |>
       arrow::write_dataset(s3_dir,
-                           partitioning = c("reference_datetime", "site_id"))
+                           partitioning = c("reference_datetime",
+                                            "site_id"))
   }
+
 }
 
 
@@ -29,26 +49,25 @@ gefs_to_parquet <- function(dates,
 #' @param dfs list of tables from grib_extract
 #' @param date forecast reference_datetime
 #' @param sites sites (as sf object)
+#' @param bands named vector of band numbers, see [gefs_bands()]
 #' @export
 efi_format_cubeextract <- function(dfs,
                                    date,
-                                   sf_sites = neon_sites(),
-                                   bands = c("PRES"= "band57",
-                                            "TMP" = "band63",
-                                            "RH" = "band64",
-                                            "UGRD" = "band67",
-                                            "VGRD" = "band68",
-                                            "APCP" = "band69",
-                                            "DSWRF" = "band78",
-                                            "DLWRF" = "band79")) {
-  sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
+                                   sites = neon_sites(),
+                                   bands = gefs_bands()) {
 
+  sites_df <- sites |>
+    tibble::as_tibble() |>
+    dplyr::select(FID, site_id)
   vars <- names(bands)
 
+
+  FID <- datetime <- time <- NULL # globalVariables has side effect?
+
   df <-
-    purrr::list_rbind(dfs, names_to = "statistic") |>
+    purrr::list_rbind(dfs, names_to = "parameter") |>
     tibble::as_tibble() |>
-    dplyr::inner_join(sites) |>
+    dplyr::inner_join(sites_df) |>
     dplyr::rename({bands}) |>
     dplyr::mutate(datetime = lubridate::as_datetime(time)) |>
     dplyr::select(-FID) |>

@@ -19,8 +19,7 @@
 grib_extract <-function(ens,
                         date = Sys.Date(),
                         sites = neon_sites(),
-                        bands = paste0("band",
-                                       c(57, 63, 64, 67, 68, 69, 78, 79)),
+                        bands = gefs_bands(),
                         horizon = gefs_horizon(),
                         cycle = "00",
 
@@ -34,7 +33,19 @@ grib_extract <-function(ens,
 
 }
 
-
+#' mapping of gefs_bands to variable names
+#'
+#' export
+gefs_bands <- function() {
+  bands = c("PRES"= "band57",
+            "TMP" = "band63",
+            "RH" = "band64",
+            "UGRD" = "band67",
+            "VGRD" = "band68",
+            "APCP" = "band69",
+            "DSWRF" = "band78",
+            "DLWRF" = "band79")
+}
 
 
 #' gefs_grib_collection

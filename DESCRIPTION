@@ -30,6 +30,7 @@ Language: en-US
 Imports: 
     dplyr,
     readr,
+    purrr,
     terra,
     arrow,
     processx,

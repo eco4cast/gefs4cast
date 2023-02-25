@@ -4,7 +4,7 @@
 \alias{efi_format_cubeextract}
 \title{efi_format_cubeextract}
 \usage{
-efi_format_cubeextract(dfs, date, sf_sites = neon_sites())
+efi_format_cubeextract(dfs, date, sites = neon_sites(), bands = gefs_bands())
 }
 \arguments{
 \item{dfs}{list of tables from grib_extract}
@@ -12,6 +12,8 @@ efi_format_cubeextract(dfs, date, sf_sites = neon_sites())
 \item{date}{forecast reference_datetime}
 
 \item{sites}{sites (as sf object)}
+
+\item{bands}{named vector of band numbers, see \code{\link[=gefs_bands]{gefs_bands()}}}
 }
 \description{
 reformat results from grib_extract to EFI format
