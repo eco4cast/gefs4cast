@@ -9,17 +9,34 @@ gefs_s3_dir <- function(path) {
   s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
 }
 
+#' gefs_to_parquet
+#'
+#' @param dates a vector of reference_datetimes
+#' @inheritParams grib_extract
 gefs_to_parquet <- function(dates,
                             ensemble,
                             s3_dir,
-                            sf_sites = neon_sites()) {
+                            sites = neon_sites(),
+                            bands = gefs_bands(),
+                            cycle = "00",
+                            horizon = gefs_horizon()) {
+
   for(date in dates) {
-    dfs <- lapply(ensemble, grib_extract, date = date, sites = sf_sites)
-    dfs |> efi_format_cubeextract(date = date, sf_sites = sf_sites) |>
+    dfs <- lapply(ensemble,
+                  grib_extract,
+                  date = date,
+                  sites = sites,
+                  bands = bands,
+                  cycle = cycle,
+                  horizon = horizon)
+    dfs |>
+      efi_format_cubeextract(date = date, sf_sites = sites) |>
       dplyr::mutate(family = "spread") |>
       arrow::write_dataset(s3_dir,
-                           partitioning = c("reference_datetime", "site_id"))
+                           partitioning = c("reference_datetime",
+                                            "site_id"))
   }
+
 }
 
 
@@ -33,20 +50,15 @@ gefs_to_parquet <- function(dates,
 efi_format_cubeextract <- function(dfs,
                                    date,
                                    sf_sites = neon_sites(),
-                                   bands = c("PRES"= "band57",
-                                            "TMP" = "band63",
-                                            "RH" = "band64",
-                                            "UGRD" = "band67",
-                                            "VGRD" = "band68",
-                                            "APCP" = "band69",
-                                            "DSWRF" = "band78",
-                                            "DLWRF" = "band79")) {
-  sites <- sf_sites |> tibble::as_tibble() |> dplyr::select(FID, site_id)
+                                   bands = gefs_bands()) {
 
+  sites <- sf_sites |>
+    tibble::as_tibble() |>
+    dplyr::select(FID, site_id)
   vars <- names(bands)
 
   df <-
-    purrr::list_rbind(dfs, names_to = "statistic") |>
+    purrr::list_rbind(dfs, names_to = "parameter") |>
     tibble::as_tibble() |>
     dplyr::inner_join(sites) |>
     dplyr::rename({bands}) |>
