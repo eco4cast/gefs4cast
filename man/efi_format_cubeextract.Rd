@@ -4,7 +4,12 @@
 \alias{efi_format_cubeextract}
 \title{efi_format_cubeextract}
 \usage{
-efi_format_cubeextract(dfs, date, sf_sites = neon_sites())
+efi_format_cubeextract(
+  dfs,
+  date,
+  sf_sites = neon_sites(),
+  bands = gefs_bands()
+)
 }
 \arguments{
 \item{dfs}{list of tables from grib_extract}
