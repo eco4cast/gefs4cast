@@ -33,7 +33,7 @@ gefs_to_parquet <- function(dates,
                   cycle = cycle,
                   horizon = horizon)
     dfs |>
-      efi_format_cubeextract(date = date, sf_sites = sites) |>
+      efi_format_cubeextract(date = date, sites = sites) |>
       dplyr::mutate(family = "spread") |>
       arrow::write_dataset(s3_dir,
                            partitioning = c("reference_datetime",

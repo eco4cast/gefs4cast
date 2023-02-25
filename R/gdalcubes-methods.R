@@ -33,6 +33,9 @@ grib_extract <-function(ens,
 
 }
 
+#' mapping of gefs_bands to variable names
+#'
+#' export
 gefs_bands <- function() {
   bands = c("PRES"= "band57",
             "TMP" = "band63",
