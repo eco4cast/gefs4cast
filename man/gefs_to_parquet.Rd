@@ -17,6 +17,10 @@ gefs_to_parquet(
 \arguments{
 \item{dates}{a vector of reference_datetimes}
 
+\item{ensemble}{vector of ensemble values (e.g. 'gep01', 'gep02', ...)}
+
+\item{s3_dir}{path to S3 directory}
+
 \item{sites}{sf object of sites to extract}
 
 \item{bands}{numeric vector of bands to extract, see details}
