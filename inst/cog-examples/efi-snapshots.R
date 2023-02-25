@@ -28,10 +28,10 @@ sf_sites = neon_sites()
 bench::bench_time({
 gefs_to_parquet(dates = Sys.Date()-1, # seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
                 ensemble = c(mean = "geavg", spr = "gespr"),
-                gefs_s3_dir("stage1-stats"), sf_sites = neon_sites())
+                gefs_s3_dir("stage1-stats"), sites = neon_sites())
 })
 
 gefs_to_parquet(dates = seq(as.Date("2023-01-01"), Sys.Date()-1, by=1),
                 ensemble = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
-                gefs_s3_dir("stage1"), sf_sites = neon_sites())
+                gefs_s3_dir("stage1"), sites = neon_sites())
 
