@@ -1,8 +1,12 @@
 
 
-gefs_s3_dir <- function(path) {
-  endpoint <- "https://sdsc.osn.xsede.org"
-  bucket <- paste0("bio230014-bucket01/neon4cast-drivers/noaa/gefs-v12/", path)
+gefs_s3_dir <- function(path,
+                        endpoint = "https://sdsc.osn.xsede.org",
+                        bucket = paste0("bio230014-bucket01/",
+                                        "neon4cast-drivers/noaa/gefs-v12/",
+                                        path))
+  {
+
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
@@ -24,7 +28,7 @@ gefs_to_parquet <- function(dates,
                             cycle = "00",
                             horizon = gefs_horizon()) {
 
-  for(date in dates) {
+  lapply(dates, function(date) {
     dfs <- lapply(ensemble,
                   grib_extract,
                   date = date,
@@ -38,7 +42,7 @@ gefs_to_parquet <- function(dates,
       arrow::write_dataset(s3_dir,
                            partitioning = c("reference_datetime",
                                             "site_id"))
-  }
+  })
 
 }
 
@@ -58,7 +62,7 @@ efi_format_cubeextract <- function(dfs,
 
   sites_df <- sites |>
     tibble::as_tibble() |>
-    dplyr::select(FID, site_id)
+    dplyr::select("FID", "site_id")
   vars <- names(bands)
 
 
@@ -67,7 +71,7 @@ efi_format_cubeextract <- function(dfs,
   df <-
     purrr::list_rbind(dfs, names_to = "parameter") |>
     tibble::as_tibble() |>
-    dplyr::inner_join(sites_df) |>
+    dplyr::inner_join(sites_df, by = "FID") |>
     dplyr::rename({bands}) |>
     dplyr::mutate(datetime = lubridate::as_datetime(time)) |>
     dplyr::select(-FID) |>
