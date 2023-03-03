@@ -30,6 +30,7 @@ Language: en-US
 Imports: 
     dplyr,
     readr,
+    purrr,
     terra,
     arrow,
     processx,
@@ -39,5 +40,7 @@ Imports:
     lubridate,
     tibble,
     tidyr,
-    stringi
+    stringi,
+    gdalcubes,
+    sf
 VignetteBuilder: knitr
