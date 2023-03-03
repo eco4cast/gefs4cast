@@ -20,6 +20,7 @@ gefs_s3_dir <- function(path,
 #' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
 #' @param s3_dir path to S3 directory
 #' @inheritParams grib_extract
+#' @export
 gefs_to_parquet <- function(dates,
                             ensemble,
                             s3_dir,
