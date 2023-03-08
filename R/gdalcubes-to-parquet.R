@@ -30,13 +30,14 @@ gefs_to_parquet <- function(dates,
                             horizon = gefs_horizon()) {
 
   lapply(dates, function(date) {
-    dfs <- lapply(ensemble,
+    dfs <- parallel::mclapply(ensemble,
                   grib_extract,
                   date = date,
                   sites = sites,
                   bands = bands,
                   cycle = cycle,
-                  horizon = horizon)
+                  horizon = horizon,
+                  mc.cores = getOption("mc.cores", 1L))
     dfs |>
       efi_format_cubeextract(date = date, sites = sites) |>
       dplyr::mutate(family = "spread") |>

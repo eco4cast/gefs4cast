@@ -25,7 +25,7 @@ grib_extract <-function(ens,
 
                         ...) {
   date <- lubridate::as_date(date)
-  view <- gefs_view(date, ...)
+  view <- gefs_view(date, ...) # fast to recreate
   gefs_grib_collection(ens, date, horizon, cycle) |>
     gdalcubes::raster_cube(view) |>
     gdalcubes::select_bands(bands) |>
@@ -150,11 +150,12 @@ gefs_horizon <- function() {
 
 
 #' gefs ensemble list
-#' @return Generates the strings for the 30 perturbed ensembles
-#'
+#' @return Generates the strings for the 30 perturbed ensembles and control
+#' If only mean and spread are needed, manually pass
+#' `c(mean = "geavg", spr = "gespr")`
 #' @export
 gefs_ensemble <- function() {
-  paste0("gep", stringr::str_pad(1:30, 2, pad="0"))
+  c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0")))
 }
 
 #' gefs bounding box

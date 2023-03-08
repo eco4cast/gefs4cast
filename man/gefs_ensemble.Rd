@@ -7,7 +7,9 @@
 gefs_ensemble()
 }
 \value{
-Generates the strings for the 30 perturbed ensembles
+Generates the strings for the 30 perturbed ensembles and control
+If only mean and spread are needed, manually pass
+\code{c(mean = "geavg", spr = "gespr")}
 }
 \description{
 gefs ensemble list
