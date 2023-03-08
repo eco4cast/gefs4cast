@@ -7,3 +7,4 @@
 ^pkgdown$
 ^figure$
 vignettes/articles
+.*\\.parquet

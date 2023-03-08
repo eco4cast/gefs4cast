@@ -5,9 +5,9 @@
 \title{gefs_to_parquet}
 \usage{
 gefs_to_parquet(
-  dates,
-  ensemble,
-  s3_dir,
+  dates = Sys.Date() - 1L,
+  path = "gefs_parquet",
+  ensemble = gefs_ensemble(),
   sites = neon_sites(),
   bands = gefs_bands(),
   cycle = "00",
@@ -17,9 +17,9 @@ gefs_to_parquet(
 \arguments{
 \item{dates}{a vector of reference_datetimes}
 
-\item{ensemble}{vector of ensemble values (e.g. 'gep01', 'gep02', ...)}
+\item{path}{path to local directory or S3 bucket (see \code{\link[arrow:write_dataset]{arrow::write_dataset()}})}
 
-\item{s3_dir}{path to S3 directory}
+\item{ensemble}{vector of ensemble values (e.g. 'gep01', 'gep02', ...)}
 
 \item{sites}{sf object of sites to extract}
 

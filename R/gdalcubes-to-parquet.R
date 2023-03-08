@@ -1,16 +1,24 @@
 
-
-gefs_s3_dir <- function(path,
+#' gefs_s3_dir
+#'
+#' Helper function that returns a path to the EFI S3 directory
+#' @param product product code, e.g. stage1
+#' @param path path inside bucket
+#' @param endpoint endpoint url
+#' @param bucket bucket name
+#' @return s3 bucket object (an arrow S3 SubTreeFileSystem object)
+#' @export
+gefs_s3_dir <- function(dir,
+                        path = "neon4cast-drivers/noaa/gefs-v12/",
                         endpoint = "https://sdsc.osn.xsede.org",
-                        bucket = paste0("bio230014-bucket01/",
-                                        "neon4cast-drivers/noaa/gefs-v12/",
-                                        path))
+                        bucket = paste0("bio230014-bucket01/", path, dir))
   {
 
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
   s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
+  s3_dir
 }
 
 
@@ -18,16 +26,19 @@ gefs_s3_dir <- function(path,
 #'
 #' @param dates a vector of reference_datetimes
 #' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
-#' @param s3_dir path to S3 directory
+#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
 #' @inheritParams grib_extract
 #' @export
-gefs_to_parquet <- function(dates,
-                            ensemble,
-                            s3_dir,
+gefs_to_parquet <- function(dates = Sys.Date() - 1L,
+                            path = "gefs_parquet",
+                            ensemble = gefs_ensemble(),
                             sites = neon_sites(),
                             bands = gefs_bands(),
                             cycle = "00",
                             horizon = gefs_horizon()) {
+
+  family <- "ensemble"
+  if(any(grepl("gespr", ensemble))) family <- "spread"
 
   lapply(dates, function(date) {
     dfs <- parallel::mclapply(ensemble,
@@ -40,8 +51,8 @@ gefs_to_parquet <- function(dates,
                   mc.cores = getOption("mc.cores", 1L))
     dfs |>
       efi_format_cubeextract(date = date, sites = sites) |>
-      dplyr::mutate(family = "spread") |>
-      arrow::write_dataset(s3_dir,
+      dplyr::mutate(family = family) |>
+      arrow::write_dataset(path,
                            partitioning = c("reference_datetime",
                                             "site_id"))
   })
