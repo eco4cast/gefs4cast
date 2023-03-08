@@ -5,20 +5,20 @@
 \title{gefs_s3_dir}
 \usage{
 gefs_s3_dir(
-  dir,
+  product,
   path = "neon4cast-drivers/noaa/gefs-v12/",
   endpoint = "https://sdsc.osn.xsede.org",
-  bucket = paste0("bio230014-bucket01/", path, dir)
+  bucket = paste0("bio230014-bucket01/", path, product)
 )
 }
 \arguments{
+\item{product}{product code, e.g. stage1}
+
 \item{path}{path inside bucket}
 
 \item{endpoint}{endpoint url}
 
 \item{bucket}{bucket name}
-
-\item{product}{product code, e.g. stage1}
 }
 \value{
 s3 bucket object (an arrow S3 SubTreeFileSystem object)

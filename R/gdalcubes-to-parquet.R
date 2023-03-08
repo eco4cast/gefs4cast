@@ -8,10 +8,10 @@
 #' @param bucket bucket name
 #' @return s3 bucket object (an arrow S3 SubTreeFileSystem object)
 #' @export
-gefs_s3_dir <- function(dir,
+gefs_s3_dir <- function(product,
                         path = "neon4cast-drivers/noaa/gefs-v12/",
                         endpoint = "https://sdsc.osn.xsede.org",
-                        bucket = paste0("bio230014-bucket01/", path, dir))
+                        bucket = paste0("bio230014-bucket01/", path, product))
   {
 
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
