@@ -41,6 +41,8 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
   lapply(dates, function(date) {
+
+    tryCatch({
     dfs <- parallel::mclapply(ensemble,
                   grib_extract,
                   date = date,
@@ -55,6 +57,10 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       arrow::write_dataset(path,
                            partitioning = c("reference_datetime",
                                             "site_id"))
+    }, error = function(e) warning(paste("date", date, "failed")),
+                                   finally=NULL)
+
+  invisible(date)
   })
 
 }
