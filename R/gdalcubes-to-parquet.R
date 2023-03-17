@@ -41,7 +41,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
   lapply(dates, function(date) {
-
+    message(date)
     tryCatch({
     dfs <- parallel::mclapply(ensemble,
                   grib_extract,

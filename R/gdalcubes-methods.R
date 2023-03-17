@@ -198,7 +198,8 @@ gefs_bbox <- function(){
 neon_sites <- function() {
   sites <- readr::read_csv(paste0("https://github.com/eco4cast/",
                                   "neon4cast-noaa-download/",
-                                  "raw/master/noaa_download_site_list.csv"))
+                                  "raw/master/noaa_download_site_list.csv"),
+                           show_col_types = FALSE)
   sf_sites <- sf::st_as_sf(sites,coords=c("longitude", "latitude"),
                            crs = 4326) |>
     tibble::rowid_to_column("FID")
