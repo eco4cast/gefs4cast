@@ -27,6 +27,7 @@ gefs_s3_dir <- function(product,
 #' @param dates a vector of reference_datetimes
 #' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
 #' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
+#' @param partitioning partitioning structure used in writing the parquet data
 #' @inheritParams grib_extract
 #' @export
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
@@ -35,7 +36,9 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             sites = neon_sites(),
                             bands = gefs_bands(),
                             cycle = "00",
-                            horizon = gefs_horizon()) {
+                            horizon = gefs_horizon(),
+                            partitioning = c("reference_datetime",
+                                             "site_id")) {
 
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
@@ -55,8 +58,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       efi_format_cubeextract(date = date, sites = sites) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path,
-                           partitioning = c("reference_datetime",
-                                            "site_id"))
+                           partitioning = partitioning)
     }, error = function(e) warning(paste("date", date, "failed")),
                                    finally=NULL)
 

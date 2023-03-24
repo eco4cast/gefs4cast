@@ -11,7 +11,8 @@ gefs_to_parquet(
   sites = neon_sites(),
   bands = gefs_bands(),
   cycle = "00",
-  horizon = gefs_horizon()
+  horizon = gefs_horizon(),
+  partitioning = c("reference_datetime", "site_id")
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
 Note that the control member, gec00, also has only a 16 day horizon}
 
 \item{horizon}{list of horizon values, in hours (see \code{\link[=gefs_horizon]{gefs_horizon()}})}
+
+\item{partitioning}{partitioning structure used in writing the parquet data}
 }
 \description{
 gefs_to_parquet
