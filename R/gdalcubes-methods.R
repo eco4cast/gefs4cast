@@ -170,7 +170,13 @@ gefs_bbox <- function(){
   #box <- stars::read_stars(grib) |> sf::st_bbox()
 
   # WKT extracted from grib (not really necessary)
-  wkt <- 'GEOGCRS["Coordinate System imported from GRIB file",
+  wkt <- grib_wkt()
+  bbox <- sf::st_bbox(c(xmin=-180.25, ymin=-90.25, xmax=179.75, ymax=90.25),
+                      crs = wkt)
+}
+
+grib_wkt <- function() {
+  'GEOGCRS["Coordinate System imported from GRIB file",
     DATUM["unnamed",
         ELLIPSOID["Sphere",6371229,0,
             LENGTHUNIT["metre",1,
@@ -187,8 +193,6 @@ gefs_bbox <- function(){
             ORDER[2],
             ANGLEUNIT["degree",0.0174532925199433,
                 ID["EPSG",9122]]]]'
-  bbox <- sf::st_bbox(c(xmin=-180.25, ymin=-90.25, xmax=179.75, ymax=90.25),
-                      crs = wkt)
 }
 
 
