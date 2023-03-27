@@ -38,10 +38,10 @@ cfs_url <- function(datetime,
 
 
 cfs_horizon <- function(reference_datetime = Sys.Date()-2,
-                        horizon=days(273)) {
+                        horizon=lubridate::days(273)) {
 
   start <- lubridate::as_datetime(reference_datetime)
-  n = 1 + ( horizon / hours(6) )
+  n = 1 + ( horizon / lubridate::hours(6) )
   out <- seq(start, start + horizon, length.out=n)
   stopifnot(out[2] - out[1] == as.difftime(6, units="hours"))
   out[-1] # first horizon has different bands
@@ -50,7 +50,7 @@ cfs_horizon <- function(reference_datetime = Sys.Date()-2,
 
 cfs_stars_extract <- function(ens,
                               reference_datetime = Sys.Date()-1,
-                              horizon = days(273),
+                              horizon = lubridate::days(273),
                               cycle = "00",
                               interval="6hrly",
                               sites = neon_sites(),
@@ -114,7 +114,7 @@ extract_sites_ <- function(r, sites) {
 
 cfs_urls <- function(ens = 1,
                      reference_datetime=Sys.Date()-2,
-                     horizon = days(273),
+                     horizon = lubridate::days(273),
                      cycle = "00",
                      interval = "6hrly") {
   cfs_horizon(reference_datetime,horizon) |>
@@ -124,7 +124,7 @@ cfs_urls <- function(ens = 1,
 
 cfs_grib_collection <- function(ens,
                                 date = Sys.Date()-1,
-                                horizon = days(273),
+                                horizon = lubridate::days(273),
                                 cycle = "00",
                                 interval="6hrly",
                                 ...) {
