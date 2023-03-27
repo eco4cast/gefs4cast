@@ -76,7 +76,7 @@ cfs_stars_extract <- function(ens,
                   datetime = datetime,
                   reference_datetime = reference_datetime,
                   family="ensemble")
-    }, error = function(e) warning(e), finally=NULL)
+    }, error = function(e){ warning(e); return(NULL)}, finally=NULL)
   }, mc.cores = getOption("mc.cores", 1L)) |>
     purrr::list_rbind()
 
