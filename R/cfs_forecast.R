@@ -66,6 +66,8 @@ cfs_stars_extract <- function(ens,
   bands <- c(31, 36:40)
 
   parallel::mclapply(date_times, function(datetime) {
+
+    tryCatch({
     cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
     stars::read_stars() |>
     select_bands_(bands) |>
@@ -74,10 +76,14 @@ cfs_stars_extract <- function(ens,
                   datetime = datetime,
                   reference_datetime = reference_datetime,
                   family="ensemble")
+    }, error = function(e) warning(e), finally=NULL)
   }, mc.cores = getOption("mc.cores", 1L)) |>
     purrr::list_rbind()
 
 }
+
+
+
 
 
 select_bands_ <- function(r, bands){
