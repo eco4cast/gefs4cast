@@ -75,10 +75,11 @@ cfs_stars_extract <- function(ens,
                   reference_datetime = reference_datetime,
                   family="ensemble")
     })
-parallel::mclapply(date_times,
-                   cfs_extract,
-                   mc.cores = getOption("mc.cores", 1L)
-                   ) |>
+
+  parallel::mclapply(date_times,
+                     cfs_extract,
+                     mc.cores = getOption("mc.cores", 1L)
+                     ) |>
     purrr::list_rbind()
 
 }
