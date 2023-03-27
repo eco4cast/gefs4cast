@@ -1,49 +1,130 @@
 
 
-#band 1: tmp (surface) - not used but is automatically included
-#band 2: longwave (surface)
-#band 3: shortwave (surface)
-#band 4: rain (PRATE)
-#band 5: uwind (10 m)
-#band 6: v wind (10 m)
-#band 7: Tmp (2m) used
-#band 8: specific humidity (2 m)
-#band 9: pressure (surface)
+#band 5: tmp (surface) - not used but is automatically included
+#band ?: longwave (surface)
+#band ?: shortwave (surface)
+#band 31: rain (PRATE)
+#band 36.1: uwind (10 m)
+#band 37  ("36.2"): v wind (10 m)
+#band 38: Tmp (2m)
+#band 39: specific humidity (2 m) SPFH
+#band 40: pressure (surface)
+# soilW
+
+
+
+
+cfs_url <- function(datetime,
+                    ens = 1,
+                    reference_datetime=Sys.Date()-2,
+                    cycle = "00",
+                    interval = "6hrly") {
+
+   base = "https://noaa-cfs-pds.s3.amazonaws.com"
+   file <-
+     glue::glue("flxf",
+                format(datetime, "%Y%m%d"),
+                format(datetime, "%H"),
+                ".0",
+                "{ens}.",
+                format(reference_datetime, "%Y%m%d"),
+                cycle, ".grb2")
+
+   ref_date <- format(reference_datetime, "%Y%m%d")
+   glue::glue("/vsicurl/{base}/cfs.{ref_date}/",
+              "{cycle}/{interval}_grib_0{ens}/{file}")
+
+}
+
+
+cfs_horizon <- function(reference_datetime = Sys.Date()-2,
+                        horizon=days(273)) {
+
+  start <- lubridate::as_datetime(reference_datetime)
+  n = 1 + ( horizon / hours(6) )
+  out <- seq(start, start + horizon, length.out=n)
+  stopifnot(out[2] - out[1] == as.difftime(6, units="hours"))
+  out[-1] # first horizon has different bands
+}
+
+
+cfs_stars_extract <- function(ens,
+                              reference_datetime = Sys.Date()-1,
+                              horizon = days(273),
+                              cycle = "00",
+                              interval="6hrly",
+                              sites = neon_sites(),
+                              ...) {
+  reference_datetime <- lubridate::as_date(reference_datetime)
+
+  date_times <- cfs_horizon(reference_datetime, horizon)
+
+  sites <- sites |>
+    sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
+    dplyr::select("site_id", "geometry")
+
+  bands <- c(31, 36:40)
+
+  parallel::mclapply(date_times, function(datetime) {
+    cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
+    stars::read_stars() |>
+    select_bands_(bands) |>
+    extract_sites_(sites) |>
+    dplyr::mutate(parameter = ens,
+                  datetime = datetime,
+                  reference_datetime = reference_datetime,
+                  family="ensemble")
+  }, mc.cores = getOption("mc.cores", 1L)) |>
+    purrr::list_rbind()
+
+}
+
+
+select_bands_ <- function(r, bands){
+  r[,,,unname(bands)]
+}
+
+extract_sites_ <- function(r, sites) {
+
+  if (!identical(sf::st_crs(r), sf::st_crs(sites))) {
+    sites <- sf::st_transform(sites, st_crs(r))
+  }
+
+  y <- stars::st_extract(r, sf::st_coordinates(sites))
+
+  variables <- stars::st_get_dimension_values(r,3)
+  variables <- gsub("(\\w+):.*", "\\1", variables)
+  colnames(y) <- variables
+
+  vctrs::vec_cbind(y, sites) |>
+    tibble::as_tibble() |>
+    tidyr::pivot_longer(variables,
+                        names_to="variable",
+                        values_to="prediction")
+}
+
+
+
+
+
+
+
+
+
 
 cfs_urls <- function(ens = 1,
                      reference_datetime=Sys.Date()-2,
-                     horizon_days = 90,
+                     horizon = days(273),
                      cycle = "00",
                      interval = "6hrly") {
-  base = "https://noaa-cfs-pds.s3.amazonaws.com"
-  purrr::map_chr(cfs_horizon(reference_datetime,horizon_days),
-                 function(datetime) {
-  file <-
-    glue::glue("flxf",
-               format(datetime, "%Y%m%d"),
-               format(datetime, "%H"),
-               ".0",
-               "{ens}.",
-               format(reference_datetime, "%Y%m%d"),
-               cycle, ".grb2")
-  ref_date <- format(reference_datetime, "%Y%m%d")
-  glue::glue("{base}/cfs.{ref_date}/",
-             "{cycle}/{interval}_grib_0{ens}/{file}")
-  })
+  cfs_horizon(reference_datetime,horizon) |>
+    purrr::map_chr(cfs_url, ens, reference_datetime, cycle, interval)
 }
 
-cfs_horizon <- function(reference_datetime = Sys.Date()-1, horizon_days=90L) {
-  horizon <-
-  seq(lubridate::as_datetime(reference_datetime),
-      lubridate::as_datetime(reference_datetime) +
-        lubridate::days(horizon_days),
-      length.out=1 + (4*horizon_days))
-  horizon[-1] # first horizon has different bands
-}
 
 cfs_grib_collection <- function(ens,
                                 date = Sys.Date()-1,
-                                horizon = 90,
+                                horizon = days(273),
                                 cycle = "00",
                                 interval="6hrly",
                                 ...) {
