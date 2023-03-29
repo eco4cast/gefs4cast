@@ -1,5 +1,3 @@
-
-
 #band 5: tmp (surface) - not used but is automatically included
 #band ?: longwave (surface)
 #band ?: shortwave (surface)
@@ -10,8 +8,6 @@
 #band 39: specific humidity (2 m) SPFH
 #band 40: pressure (surface)
 # soilW
-
-
 
 
 cfs_url <- function(datetime,
@@ -56,16 +52,14 @@ cfs_stars_extract <- function(ens,
                               sites = neon_sites(),
                               ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
-
   date_times <- cfs_horizon(reference_datetime, horizon)
-
   sites <- sites |>
     sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
     dplyr::select("site_id", "geometry")
 
   bands <- c(31, 36:40)
 
-  cfs_extract <- purrr::possibly(function(datetime) {
+  cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
     cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
     stars::read_stars() |>
     select_bands_(bands) |>
@@ -139,12 +133,11 @@ cfs_grib_collection <- function(ens,
   reference_datetime <- lubridate::as_date(date)
   date_time <- cfs_horizon(reference_datetime, horizon)
   urls <- cfs_urls(ens, reference_datetime, horizon, cycle, interval)
-  gribs <- paste0("/vsicurl/", urls)
-  gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
+  gdalcubes::create_image_collection(urls, date_time = date_time, ...)
 }
 
 cfs_view <- function ( t0 = Sys.Date()-1,
-                       t1 = as.Date(t0) + 90L, #- lubridate::seconds(1),
+                       t1 = as.Date(t0) + lubridate::days(273),
                        box = cfs_bbox(),
                        dx = 0.5,
                        dy = 0.5,
