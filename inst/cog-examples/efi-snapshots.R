@@ -6,16 +6,21 @@
 
 library(gdalcubes)
 gdalcubes_options(parallel=TRUE)
+devtools::load_all()
 
+options("mc.cores"=2L)
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-1,
+  gefs_to_parquet(Sys.Date()-2,
                   ensemble = c(mean = "geavg", spr = "gespr"),
                   sites = neon_sites())
 })
 
-options("mc.cores"=31L) # 11min w/ 31 cores, 5.32 hrs on 1 core
+
+
+
+options("mc.cores"=parallel::detectCores()) # 11min w/ 31 cores, 5.32 hrs on 1 core
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-1)
+  gefs_to_parquet(Sys.Date()-12, ensemble = gefs_ensemble())
 })
 
 

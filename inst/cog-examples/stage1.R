@@ -2,9 +2,11 @@
 
 library(vis4cast)
 vis4cast::ignore_sigpipe()
-library(gefs4cast)
+
+devtools::load_all()
+
 gdalcubes::gdalcubes_options(parallel=TRUE)
-options("mc.cores"=4L) # 11min w/ 31 cores, 5.32 hrs on 1 core.  on top of gdalcubes parallel use of of all cores
+options("mc.cores"=1L) # 11min w/ 31 cores, 5.32 hrs on 1 core.  on top of gdalcubes parallel use of of all cores
 
 
 stage1 <- gefs4cast::gefs_s3_dir("stage1")

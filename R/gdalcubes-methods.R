@@ -1,5 +1,19 @@
 
 
+gdalcubes_cloud_config <- function() {
+  # set recommended variables for cloud access:
+  # https://gdalcubes.github.io/source/concepts/config.html#recommended-settings-for-cloud-access
+gdalcubes::gdalcubes_set_gdal_config("VSI_CACHE", "TRUE")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_CACHEMAX","30%")
+gdalcubes::gdalcubes_set_gdal_config("VSI_CACHE_SIZE","10000000")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_HTTP_MULTIPLEX","YES")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_INGESTED_BYTES_AT_OPEN","32000")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_DISABLE_READDIR_ON_OPEN","EMPTY_DIR")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_HTTP_VERSION","2")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_HTTP_MERGE_CONSECUTIVE_RANGES","YES")
+gdalcubes::gdalcubes_set_gdal_config("GDAL_NUM_THREADS", "ALL_CPUS")
+}
+
 #' grib_extract
 #'
 #' @inheritParams gefs_grib_collection
@@ -24,10 +38,13 @@ grib_extract <-function(ens,
                         cycle = "00",
 
                         ...) {
+
+  gdalcubes_cloud_config()
+
   date <- lubridate::as_date(date)
-  view <- gefs_view(date, ...) # fast to recreate
+ # view <- gefs_view(date, ...) # fast to recreate
   gefs_grib_collection(ens, date, horizon, cycle) |>
-    gdalcubes::raster_cube(view) |>
+   # gdalcubes::raster_cube(view) |>
     gdalcubes::select_bands(bands) |>
     gdalcubes::extract_geom(sites)
 
@@ -75,10 +92,14 @@ gefs_grib_collection <- function(ens,
   date_time <- date + lubridate::hours(horizon)
   urls <- gefs_urls(ens, date, horizon, cycle)
   gribs <- paste0("/vsicurl/", urls)
-  gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
+  all_bands <- paste0("band", 1:85)
+
+  gdalcubes::stack_cube(gribs, datetime_values = date_time,
+                        band_names = all_bands, ...)
+
+  #gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
 
 }
-
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
 gefs_urls <- function(ens,
                       date = Sys.Date(),
