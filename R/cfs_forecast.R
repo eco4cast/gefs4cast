@@ -122,7 +122,7 @@ extract_sites_ <- function(r, sites) {
   y <- stars::st_extract(r, sf::st_coordinates(sites))
 
   variables <- stars::st_get_dimension_values(r,3)
-  variables <- gsub("(\\w+):.*", "\\1", variables)
+  variables <- gsub("(\\w+:\\w):.*", "\\1", variables)
   colnames(y) <- variables
 
   vctrs::vec_cbind(y, sites) |>
