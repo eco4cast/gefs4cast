@@ -18,7 +18,7 @@ bench::bench_time({
 
 
 
-options("mc.cores"=parallel::detectCores()) # 11min w/ 31 cores, 5.32 hrs on 1 core
+options("mc.cores"=parallel::detectCores()) # 5.4min w/ 24 cores
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-12, ensemble = gefs_ensemble())
 })
