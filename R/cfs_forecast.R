@@ -1,15 +1,27 @@
-
-
 #band 5: tmp (surface) - not used but is automatically included
-#band ?: longwave (surface)
-#band ?: shortwave (surface)
-#band 31: rain (PRATE)
-#band 36.1: uwind (10 m)
-#band 37  ("36.2"): v wind (10 m)
+#band 11: longwave (surface) DLWRF
+#band 16: shortwave (surface) DSWRF
+#band 31: rain flux (PRATE) (kg/m^2/s)
+#band 36: UGRD Wind (10 m)
+#band 37:  (missnumbered as 36.2!): VGRD Wind (10 m)
 #band 38: Tmp (2m)
 #band 39: specific humidity (2 m) SPFH
 #band 40: pressure (surface)
-# soilW
+# SNOD Snow Depth
+# SNOWC Snow % Cover
+# PEVPR potential evaporation rate
+# TRANS transpiration rate
+# VEG vegetation type
+# soilW 0-10cm
+# soilW 10-40cm
+# soilW 40-100cm
+# soilW 100-200cm
+# TCDC clm total cloud coover (column)
+# PWAT clm atmos column precipitable water (kg/m^2)
+# TMAX 2m
+# TMIN 2m
+# EVPS surface direct evaporation from bare soil
+# EVCW canopy water evaporation
 
 cfs_s3_dir <- function(product,
                         path = "neon4cast-drivers/noaa/cfs/",
@@ -23,8 +35,6 @@ cfs_s3_dir <- function(product,
   s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
   s3_dir
 }
-
-
 
 cfs_url <- function(datetime,
                     ens = 1,
@@ -77,16 +87,14 @@ cfs_stars_extract <- function(ens,
                               ...) {
   assert_gdal_version()
   reference_datetime <- lubridate::as_date(reference_datetime)
-
   date_times <- cfs_horizon(reference_datetime, horizon)
-
   sites <- sites |>
     sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
     dplyr::select("site_id", "geometry")
 
   bands <- c(31, 36:40)
 
-  cfs_extract <- purrr::possibly(function(datetime) {
+  cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
     cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
     stars::read_stars() |>
     select_bands_(bands) |>
@@ -122,7 +130,7 @@ extract_sites_ <- function(r, sites) {
   y <- stars::st_extract(r, sf::st_coordinates(sites))
 
   variables <- stars::st_get_dimension_values(r,3)
-  variables <- gsub("(\\w+:\\w):.*", "\\1", variables)
+  variables <- gsub("(\\w+:\\w+):.*", "\\1", variables)
   colnames(y) <- variables
 
   vctrs::vec_cbind(y, sites) |>
@@ -160,12 +168,11 @@ cfs_grib_collection <- function(ens,
   reference_datetime <- lubridate::as_date(date)
   date_time <- cfs_horizon(reference_datetime, horizon)
   urls <- cfs_urls(ens, reference_datetime, horizon, cycle, interval)
-  gribs <- paste0("/vsicurl/", urls)
-  gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
+  gdalcubes::create_image_collection(urls, date_time = date_time, ...)
 }
 
 cfs_view <- function ( t0 = Sys.Date()-1,
-                       t1 = as.Date(t0) + 90L, #- lubridate::seconds(1),
+                       t1 = as.Date(t0) + lubridate::days(273),
                        box = cfs_bbox(),
                        dx = 0.5,
                        dy = 0.5,
