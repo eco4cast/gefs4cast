@@ -1,5 +1,4 @@
 
-
 gdalcubes_cloud_config <- function() {
   # set recommended variables for cloud access:
   # https://gdalcubes.github.io/source/concepts/config.html#recommended-settings-for-cloud-access

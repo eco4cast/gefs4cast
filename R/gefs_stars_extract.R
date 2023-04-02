@@ -1,7 +1,7 @@
 gefs_stars_extract <- function(ens,
                               reference_datetime = Sys.Date()-1,
                               horizon = gefs_horizon(),
-                              bands = gefs_bands(),
+                              bands = gefs_band_numbers(),
                               cycle = "00",
                               sites = neon_sites(),
                               ...) {
@@ -26,4 +26,8 @@ gefs_stars_extract <- function(ens,
   ) |>
     purrr::list_rbind()
 
+}
+
+gefs_band_numbers <- function(){
+  c(57,63,64,67:69,78,79)
 }

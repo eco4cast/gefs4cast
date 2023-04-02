@@ -15,16 +15,17 @@ bench::bench_time({
   gefs_to_parquet(Sys.Date()-19, ensemble = gefs_ensemble())
 })
 
-
+options("mc.cores"=parallel::detectCores())
+ensemble = c(mean = "geavg", spr = "gespr")
 bench::bench_time({
-  dfs <- parallel::mclapply(gefs_ensemble,
+  dfs <- parallel::mclapply(ensemble,
                             gefs_stars_extract,
            reference_datetime = Sys.Date() - 20,
            mc.cores = getOption("mc.cores", 1L))
 })
 
 
-options("mc.cores"=4L)
+options("mc.cores"=1L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-2,
                   ensemble = c(mean = "geavg", spr = "gespr"),

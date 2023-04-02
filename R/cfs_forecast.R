@@ -114,51 +114,6 @@ cfs_stars_extract <- function(ens,
 }
 
 
-
-
-
-select_bands_ <- function(r, bands){
-  r[,,,unname(bands)]
-}
-
-# a `stars` based extract_sites mimicking gdalcubes:
-# automatically handle
-extract_sites_ <- function(r, sites, variable_dimension = 3) {
-
-  # better to match crs ahead of time, but can do on-the-fly
-  if (!identical(sf::st_crs(r), sf::st_crs(sites))) {
-    sites <- sf::st_transform(sites, st_crs(r))
-  }
-
-  # stars::st_extract
-  y <- stars::st_extract(r, sf::st_coordinates(sites))
-
-  # variable name parsing from grib idx, not generic
-  variables <- stars::st_get_dimension_values(r,variable_dimension)
-  variables <- gsub("(\\w+:\\w+):.*", "\\1", variables)
-  colnames(y) <- variables
-
-  # format nicely
-  out <- sites |>
-    dplyr::select("site_id", "geometry") |>
-    vctrs::vec_cbind(y) |>
-    tibble::as_tibble() # should we leave it as an sf object?
-
-  # convert to EFI 'long' format while variable names are handy
-  out |> tidyr::pivot_longer(variables,
-                        names_to="variable",
-                        values_to="prediction")
-}
-
-
-
-
-
-
-
-
-
-
 cfs_urls <- function(ens = 1,
                      reference_datetime=Sys.Date()-2,
                      horizon = lubridate::days(200),
@@ -178,27 +133,7 @@ cfs_grib_collection <- function(ens,
   reference_datetime <- lubridate::as_date(date)
   date_time <- cfs_horizon(reference_datetime, horizon)
   urls <- cfs_urls(ens, reference_datetime, horizon, cycle, interval)
-  gdalcubes::create_image_collection(urls, date_time = date_time, ...)
-}
-
-cfs_view <- function ( t0 = Sys.Date()-1,
-                       t1 = as.Date(t0) + lubridate::days(273),
-                       box = cfs_bbox(),
-                       dx = 0.5,
-                       dy = 0.5,
-                       dt = "PT6H",
-                       crs = grib_wkt(),
-                       ...
-){
-  t0 <- lubridate::as_datetime(t0)
-  t1 <- lubridate::as_datetime(t1)
-  gdalcubes::cube_view(srs = crs,
-                       extent = list(left = box[1], right = box[3],
-                                     top = box[4], bottom = box[2],
-                                     t0= format(t0, "%Y-%m-%dT%H:%M:%SZ"),
-                                     t1 = format(t1, "%Y-%m-%dT%H:%M:%SZ")),
-                       dx = dx, dy = dy, dt = dt, ...)
-
+  gdalcubes::stack_cube(urls, datetime_values = date_time, band_names = )
 }
 
 # "https://noaa-cfs-pds.s3.amazonaws.com/cfs.20181031/00/6hrly_grib_01/flxf2018103100.01.2018103100.grb2"
