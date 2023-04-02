@@ -20,7 +20,12 @@ bench::bench_time({
 
 options("mc.cores"=parallel::detectCores()) # 5.4min w/ 24 cores
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-12, ensemble = gefs_ensemble())
+  gefs_to_parquet(Sys.Date()-13, ensemble = gefs_ensemble())
 })
 
 
+bench::bench_time({
+  mclapply(gefs_ensemble, gefs_stars_extract,
+           reference_datetime = Sys.Date() - 15,
+           mc.cores = options("mc.cores", 1L))
+})

@@ -7,9 +7,6 @@ gefs_stars_extract <- function(ens,
                               ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_times <- cfs_horizon(reference_datetime, horizon)
-  sites <- sites |>
-    sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
-    dplyr::select("site_id", "geometry")
 
   cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
     cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
