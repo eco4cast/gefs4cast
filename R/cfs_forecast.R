@@ -6,7 +6,7 @@
 #band 37:  (missnumbered as 36.2!): VGRD Wind (10 m)
 #band 38: Tmp (2m)
 #band 39: specific humidity (2 m) SPFH
-#band 40: pressure (surface)
+#band 40: pressure (surface) PRES
 # SNOD Snow Depth
 # SNOWC Snow % Cover
 # PEVPR potential evaporation rate
@@ -22,6 +22,18 @@
 # TMIN 2m
 # EVPS surface direct evaporation from bare soil
 # EVCW canopy water evaporation
+
+cfs_bands <- function() {
+  c("TMP_srf" = "x5",
+    "DLWRF" = "x11",
+    "DSWRF" = "x16",
+    "PRATE" = "x31",
+    "UGRD" = "x36",
+    "VGRD" = "x37",
+    "TMP_2m" = "x38",
+    "SPFH" = "x39",
+    "PRES" = "x40")
+}
 
 cfs_s3_dir <- function(product,
                         path = "neon4cast-drivers/noaa/cfs/",
@@ -69,50 +81,6 @@ cfs_horizon <- function(reference_datetime = Sys.Date()-2,
   out[-1] # first horizon has different bands
 }
 
-assert_gdal_version <- function(version = "3.6.0") {
-  gdal_version <- sf:::CPL_gdal_version()
-  if(!compareVersion(gdal_version, version)>=0) {
-    stop(paste("gdal v", version,
-               "is required, but detected gdal v", gdal_version), call. = FALSE)
-  }
-}
-
-
-cfs_stars_extract <- function(ens,
-                              reference_datetime = Sys.Date()-1,
-                              horizon = lubridate::days(200),
-                              cycle = "00",
-                              interval="6hrly",
-                              sites = neon_sites(),
-                              ...) {
-  assert_gdal_version()
-  reference_datetime <- lubridate::as_date(reference_datetime)
-  date_times <- cfs_horizon(reference_datetime, horizon)
-  sites <- sites |>
-    sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
-    dplyr::select("site_id", "geometry")
-
-  bands <- c(31, 36:40)
-
-  cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
-    cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
-    stars::read_stars() |>
-    select_bands_(bands) |>
-    extract_sites_(sites) |>
-    dplyr::mutate(parameter = ens,
-                  datetime = datetime,
-                  reference_datetime = reference_datetime,
-                  family="ensemble")
-    })
-
-  parallel::mclapply(date_times,
-                     cfs_extract,
-                     mc.cores = getOption("mc.cores", 1L)
-                     ) |>
-    purrr::list_rbind()
-
-}
-
 
 cfs_urls <- function(ens = 1,
                      reference_datetime=Sys.Date()-2,
@@ -122,7 +90,6 @@ cfs_urls <- function(ens = 1,
   cfs_horizon(reference_datetime,horizon) |>
     purrr::map_chr(cfs_url, ens, reference_datetime, cycle, interval)
 }
-
 
 cfs_grib_collection <- function(ens,
                                 date = Sys.Date()-1,
@@ -136,8 +103,8 @@ cfs_grib_collection <- function(ens,
   gdalcubes::stack_cube(urls, datetime_values = date_time, band_names = )
 }
 
+# extracted from example grb2 file:
 # "https://noaa-cfs-pds.s3.amazonaws.com/cfs.20181031/00/6hrly_grib_01/flxf2018103100.01.2018103100.grb2"
-
 
 cfs_bbox <- function(){
   # WKT extracted from grib (not really necessary)
@@ -149,4 +116,12 @@ cfs_bbox <- function(){
       xmax=359.5307493,
       ymax=89.7506842),
     crs = wkt)
+}
+
+assert_gdal_version <- function(version = "3.6.0") {
+  gdal_version <- sf:::CPL_gdal_version()
+  if(!compareVersion(gdal_version, version)>=0) {
+    stop(paste("gdal v", version,
+               "is required, but detected gdal v", gdal_version), call. = FALSE)
+  }
 }

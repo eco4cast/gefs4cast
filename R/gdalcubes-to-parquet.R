@@ -85,8 +85,6 @@ efi_format_cubeextract <- function(dfs,
     tibble::as_tibble() |>
     dplyr::select("FID", "site_id")
   vars <- names(bands)
-
-
   FID <- datetime <- time <- NULL # globalVariables has side effect?
 
   df <-

@@ -8,15 +8,18 @@ library(gdalcubes)
 gdalcubes_options(parallel=TRUE)
 devtools::load_all()
 
-# 5.4min w/ 24 cores, thelio
-# 13 min, 4 cores, cirrus
-options("mc.cores"=4)
+# thelio: 5.4min w/ 24 cores,
+# cirrus: 11.5 min, 4 cores,  (930Mb/s), uses ~ 44 GB RAM at peak
+# c6in.4xlarge, 8 cores: 2.8min
+options("mc.cores"=8)
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-19, ensemble = gefs_ensemble())
+  gefs_to_parquet(Sys.Date()-29, ensemble = gefs_ensemble())
 })
 
-options("mc.cores"=parallel::detectCores())
+# c6in.4xlarge 2.7GB/s, 4 cores 39.6 min (geavg/gespr members)
+options("mc.cores"=8)
 ensemble = c(mean = "geavg", spr = "gespr")
+ensemble = gefs_ensemble()
 bench::bench_time({
   dfs <- parallel::mclapply(ensemble,
                             gefs_stars_extract,
@@ -24,8 +27,8 @@ bench::bench_time({
            mc.cores = getOption("mc.cores", 1L))
 })
 
-
-options("mc.cores"=1L)
+# c6in.4xlarge 24 seconds
+options("mc.cores"=8L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-2,
                   ensemble = c(mean = "geavg", spr = "gespr"),

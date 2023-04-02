@@ -39,11 +39,8 @@ grib_extract <-function(ens,
                         ...) {
 
   gdalcubes_cloud_config()
-
   date <- lubridate::as_date(date)
- # view <- gefs_view(date, ...) # fast to recreate
   gefs_grib_collection(ens, date, horizon, cycle) |>
-   # gdalcubes::raster_cube(view) |>
     gdalcubes::select_bands(bands) |>
     gdalcubes::extract_geom(sites)
 
@@ -92,13 +89,11 @@ gefs_grib_collection <- function(ens,
   urls <- gefs_urls(ens, date, horizon, cycle)
   gribs <- paste0("/vsicurl/", urls)
   all_bands <- paste0("band", 1:85)
-
   gdalcubes::stack_cube(gribs, datetime_values = date_time,
                         band_names = all_bands, ...)
 
-  #gdalcubes::create_image_collection(gribs, date_time = date_time, ...)
-
 }
+
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
 gefs_urls <- function(ens,
                       date = Sys.Date(),
