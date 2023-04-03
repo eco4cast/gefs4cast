@@ -36,41 +36,39 @@ extract_sites_ <- function(r, sites, variable_dimension = 3) {
 }
 
 
+gefs_band_numbers <- function(){
+  c(57,63,64,67:69,78,79)
+}
+
+
 gefs_stars_extract <- function(ens,
                                reference_datetime = Sys.Date()-1,
                                horizon = gefs_horizon(),
                                bands = gefs_band_numbers(),
                                cycle = "00",
                                sites = neon_sites(),
+                               family = "ensemble",
                                ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
-  date_times <- reference_datetime + lubridate::hours(horizon)
-
-  gefs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
-    urls<- gefs_urls(ens=ens, date=reference_datetime, horizon=horizon, cycle=cycle)
-    paste0("/vsicurl/",urls) |>
+  gefs_extract <- purrr::possibly(function(h, quiet=FALSE) {
+    gefs_urls(ens = ens,
+              reference_datetime = reference_datetime,
+              horizon = h,
+              cycle = cycle) |>
       stars::read_stars() |>
       select_bands_(bands) |>
       extract_sites_(sites) |>
       dplyr::mutate(parameter = ens,
-                    datetime = datetime,
+                    datetime = reference_datetime + lubridate::hours(h),
                     reference_datetime = reference_datetime,
-                    family="ensemble")
+                    family=family)
   })
-
-  parallel::mclapply(date_times,
+  parallel::mclapply(horizon,
                      gefs_extract,
                      mc.cores = getOption("mc.cores", 1L)
   ) |>
     purrr::list_rbind()
-
 }
-
-gefs_band_numbers <- function(){
-  c(57,63,64,67:69,78,79)
-}
-
-
 
 
 cfs_stars_extract <- function(ens,
@@ -90,7 +88,11 @@ cfs_stars_extract <- function(ens,
   bands <- c(31, 36:40)
 
   cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
-    cfs_url(datetime, ens, reference_datetime, cycle, interval) |>
+    cfs_url(datetime,
+            ens = ens,
+            reference_datetime,
+            cycle,
+            interval) |>
       stars::read_stars() |>
       select_bands_(bands) |>
       extract_sites_(sites) |>

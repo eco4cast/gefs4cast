@@ -17,8 +17,8 @@ bench::bench_time({
 })
 
 # c6in.4xlarge 2.7GB/s, 4 cores 39.6 min (geavg/gespr members)
-options("mc.cores"=8)
-ensemble = c(mean = "geavg", spr = "gespr")
+options("mc.cores"=64)
+#ensemble = c(mean = "geavg", spr = "gespr")
 ensemble = gefs_ensemble()
 bench::bench_time({
   dfs <- parallel::mclapply(ensemble,
@@ -27,7 +27,7 @@ bench::bench_time({
            mc.cores = getOption("mc.cores", 1L))
 })
 
-# c6in.4xlarge 24 seconds
+# c6in.4xlarge: 24 seconds
 options("mc.cores"=8L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-2,

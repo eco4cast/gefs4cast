@@ -71,36 +71,31 @@ cfs_url <- function(datetime,
 }
 
 
-cfs_horizon <- function(reference_datetime = Sys.Date()-2,
-                        horizon=lubridate::days(200)) {
-
-  start <- lubridate::as_datetime(reference_datetime)
-  n = 1 + ( horizon / lubridate::hours(6) )
-  out <- seq(start, start + horizon, length.out=n)
-  stopifnot(out[2] - out[1] == as.difftime(6, units="hours"))
-  out[-1] # first horizon has different bands
+cfs_horizon <- function(horizon_hours = 24 * 200L, interval_hours=6) {
+  lubridate::hours(seq(interval_hours, horizon_hours, by = interval_hours))
 }
-
 
 cfs_urls <- function(ens = 1,
                      reference_datetime=Sys.Date()-2,
-                     horizon = lubridate::days(200),
+                     horizon = cfs_horizon(),
                      cycle = "00",
                      interval = "6hrly") {
-  cfs_horizon(reference_datetime,horizon) |>
+  lubridate::as_datetime(reference_datetime) + horizon |>
     purrr::map_chr(cfs_url, ens, reference_datetime, cycle, interval)
 }
 
 cfs_grib_collection <- function(ens,
-                                date = Sys.Date()-1,
-                                horizon = lubridate::days(200),
+                                reference_datetime = Sys.Date()-1,
+                                horizon = cfs_horizon(),
                                 cycle = "00",
                                 interval="6hrly",
                                 ...) {
-  reference_datetime <- lubridate::as_date(date)
-  date_time <- cfs_horizon(reference_datetime, horizon)
-  urls <- cfs_urls(ens, reference_datetime, horizon, cycle, interval)
-  gdalcubes::stack_cube(urls, datetime_values = date_time, band_names = )
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  urls <- cfs_urls(ens, reference_datetime, horizon, cycle, ...)
+  date_time <- reference_datetime + cfs_horizon()
+  gdalcubes::stack_cube(urls,
+                        datetime_values = date_time,
+                        band_names = cfs_bands)
 }
 
 # extracted from example grb2 file:

@@ -6,18 +6,15 @@ ens <- 1
 reference_datetime <- as.Date("2023-03-02")
 options("mc.cores"=parallel::detectCores())
 bands <- cfs_bands()
-sites <- neon_sites()
-
-sites <- spData::world  #spData::us_states
+sites <- neon_sites() |> sf::st_shift_longitude()
 
 bench::bench_time({
   df <-
     cfs_grib_collection(ens, reference_datetime) |>
     gdalcubes::select_bands(bands) |>
-    gdalcubes::extract_geom(sites) # something is off on sites positions
+    gdalcubes::extract_geom(sites)
 
 })
-
 
 dfs <- parallel::mclapply(ensemble,
                           grib_extract,
@@ -30,6 +27,9 @@ dfs <- parallel::mclapply(ensemble,
 dfs |>
   efi_format_cubeextract(date = date, sites = sites) |>
   dplyr::mutate(family = family)
+
+
+
 
 
 

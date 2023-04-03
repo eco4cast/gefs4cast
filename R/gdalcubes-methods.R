@@ -80,33 +80,35 @@ gefs_bands <- function() {
 #' @export
 #'
 gefs_grib_collection <- function(ens,
-                                 date = Sys.Date(),
+                                 reference_datetime = Sys.Date(),
                                  horizon = gefs_horizon(),
                                  cycle = "00",
                                  ...) {
-  date <- lubridate::as_date(date)
-  date_time <- date + lubridate::hours(horizon)
-  urls <- gefs_urls(ens, date, horizon, cycle)
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  date_time <- reference_datetime + lubridate::hours(horizon)
+  urls <- gefs_urls(ens, reference_datetime, horizon, cycle)
   gribs <- paste0("/vsicurl/", urls)
+
   all_bands <- paste0("band", 1:85)
-  gdalcubes::stack_cube(gribs, datetime_values = date_time,
+  gdalcubes::stack_cube(gribs,
+                        datetime_values = date_time,
                         band_names = all_bands, ...)
 
 }
 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
 gefs_urls <- function(ens,
-                      date = Sys.Date(),
+                      reference_datetime = Sys.Date(),
                       horizon = gefs_horizon(),
                       cycle = "00",
                       series = "atmos",
                       resolution = "0p50",
                       base = "https://noaa-gefs-pds.s3.amazonaws.com") {
-  date <- lubridate::as_date(date)
-  date_time <- date + lubridate::hours(horizon)
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  date_time <- reference_datetime + lubridate::hours(horizon)
   gribs <- paste0(
                   base,
-                  "/gefs.",format(date, "%Y%m%d"),
+                  "/gefs.",format(reference_datetime, "%Y%m%d"),
                   "/", cycle,
                   "/",series,
                   "/pgrb2ap5/",
@@ -114,46 +116,9 @@ gefs_urls <- function(ens,
                   ".t", cycle, "z.",
                   "pgrb2a.0p50.",
                   "f", horizon)
-  gribs
+  paste0("/vsicurl/", gribs)
 }
 
-#' gefs_view
-#'
-#' A thin wrapper around gdalcubes::cube_view
-#' with the default configuration for GEFS
-#' @param t0 start time (Date or datetime object)
-#' @param t1 end time. 35 days after start by default.
-#' @param box bounding box giving (xmin, ymin, xmax, ymax) numeric vector
-#' (or an sf_bbox object)
-#' @param dx resolution, x-coordinate
-#' @param dy resolution, y-coordinate
-#' @param dt resolution, time coordinate, ISO8601 temporal-duration notation
-#' @param crs Coordinate reference system (string)
-#' @param ... additional options, see [gdalcubes::cube_view()]
-#' @return a cube_view object
-#' @examples
-#' view <- gefs_view(as.Date("2022-12-01"))
-#'
-#' @export
-gefs_view <- function (t0 = Sys.Date(),
-                       t1 = as.Date(t0) + 35L - lubridate::seconds(1),
-                       box = gefs_bbox(),
-                       dx = 0.5,
-                       dy = 0.5,
-                       dt = "PT3H",
-                       crs = "EPSG:4326",
-                        ...
-) {
-  t0 <- lubridate::as_datetime(t0)
-  t1 <- lubridate::as_datetime(t1)
-  gdalcubes::cube_view(srs = crs,
-            extent = list(left = box[1], right = box[3],
-                          top = box[4], bottom = box[2],
-                          t0= format(t0, "%Y-%m-%dT%H:%M:%SZ"),
-                          t1 = format(t1, "%Y-%m-%dT%H:%M:%SZ")),
-            dx = dx, dy = dy, dt = dt, ...)
-
-}
 
 #' gefs_horizon
 #' @return list of horizon values (for cycle 00, gepNN forecasts)
