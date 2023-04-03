@@ -9,17 +9,20 @@ devtools::load_all()
 # cirrus:
 options("mc.cores"=1L)
 bench::bench_time({
-  cfs_to_parquet(Sys.Date()-5,  horizon = cfs_horizon)
+  cfs_to_parquet(Sys.Date()-2,  horizon = cfs_horizon)
 })
 
-
+options("mc.cores"=parallel::detectCores())
 bench::bench_time({
-  df <- stars_extract("1",
-                      reference_datetime = Sys.Date()-32,
-                      horizon = cfs_horizon,
-                      bands = cfs_band_numbers(),
-                      url_builder = cfs_urls)
+  cfs_stars(Sys.Date()-1,  horizon = cfs_horizon)
 })
+
+
+
+
+
+
+
 
 
 
