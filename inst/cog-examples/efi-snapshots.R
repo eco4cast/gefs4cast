@@ -8,7 +8,7 @@ library(gdalcubes)
 gdalcubes_options(parallel=TRUE)
 devtools::load_all()
 
-# thelio: 5.4min w/ 24 cores,
+# thelio: 11.4min w/ 24 cores,
 # cirrus: 11.5 min, 4 cores,  (930Mb/s), uses ~ 44 GB RAM at peak
 # c6in.4xlarge, 8 cores: 2.8min
 options("mc.cores"=8)
@@ -28,7 +28,7 @@ bench::bench_time({
 })
 
 # c6in.4xlarge: 24 seconds
-options("mc.cores"=8L)
+options("mc.cores"=1L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-2,
                   ensemble = c(mean = "geavg", spr = "gespr"),

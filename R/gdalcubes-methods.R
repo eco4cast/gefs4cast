@@ -68,7 +68,7 @@ gefs_bands <- function() {
 #' @param ens ensemble the ensemble member to process, e.g. 'gepavg'
 #' can also be geavg (mean), gespr (esemble spread),
 #'  gec00 (control) or gep01-gep30 (perturbed)
-#' @param date start date
+#' @param reference_datetime start date for forecast
 #' @param horizon list of horizon values, in hours (see [gefs_horizon()])
 #' @param cycle forecast cycle, GEFS forecasts are produced four times a day,
 #' at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
@@ -82,19 +82,20 @@ gefs_bands <- function() {
 gefs_grib_collection <- function(ens,
                                  reference_datetime = Sys.Date(),
                                  horizon = gefs_horizon(),
+                                 band_names = all_gefs_bands(),
                                  cycle = "00",
                                  ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_time <- reference_datetime + lubridate::hours(horizon)
-  urls <- gefs_urls(ens, reference_datetime, horizon, cycle)
-  gribs <- paste0("/vsicurl/", urls)
-
-  all_bands <- paste0("band", 1:85)
+  urls <- gefs_urls(urls, reference_datetime, horizon, cycle)
   gdalcubes::stack_cube(gribs,
                         datetime_values = date_time,
-                        band_names = all_bands, ...)
+                        band_names = band_names, ...)
 
 }
+
+all_gefs_bands <- function() paste0("band", 1:85)
+
 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
 gefs_urls <- function(ens,

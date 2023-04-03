@@ -87,16 +87,18 @@ cfs_urls <- function(ens = 1,
 cfs_grib_collection <- function(ens,
                                 reference_datetime = Sys.Date()-1,
                                 horizon = cfs_horizon(),
+                                bands = all_cfs_bands(),
                                 cycle = "00",
-                                interval="6hrly",
                                 ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
-  urls <- cfs_urls(ens, reference_datetime, horizon, cycle, ...)
   date_time <- reference_datetime + cfs_horizon()
+  urls <- cfs_urls(ens, reference_datetime, horizon, cycle, ...)
   gdalcubes::stack_cube(urls,
                         datetime_values = date_time,
-                        band_names = cfs_bands)
+                        band_names = bands)
 }
+
+all_cfs_bands <- function() paste0("x", 1:103)
 
 # extracted from example grb2 file:
 # "https://noaa-cfs-pds.s3.amazonaws.com/cfs.20181031/00/6hrly_grib_01/flxf2018103100.01.2018103100.grb2"
