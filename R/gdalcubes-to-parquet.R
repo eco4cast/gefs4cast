@@ -33,26 +33,44 @@ gefs_s3_dir <- function(product,
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             path = "gefs_parquet",
                             ensemble = gefs_ensemble(),
-                            sites = neon_sites(),
                             bands = gefs_bands(),
-                            cycle = "00",
+                            sites = neon_sites(),
                             horizon = gefs_horizon(),
+                            all_bands = gefs_all_bands(),
+                            url_builder = gefs_urls,
+                            cycle = "00",
                             partitioning = c("reference_datetime",
                                              "site_id")) {
 
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
+  grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
+                  url_builder, cycle, partitioning)
+}
 
+grib_to_parquet <- function(dates = Sys.Date() - 1L,
+                            path = "noaa",
+                            ensemble,
+                            bands,
+                            sites = neon_sites(),
+                            horizon,
+                            all_bands,
+                            url_builder,
+                            cycle = "00",
+                            partitioning = c("reference_datetime",
+                                             "site_id")) {
   lapply(dates, function(date) {
     message(date)
     tryCatch({
     dfs <- parallel::mclapply(ensemble,
                   grib_extract,
-                  date = date,
-                  sites = sites,
+                  reference_datetime = date,
                   bands = bands,
-                  cycle = cycle,
+                  sites = sites,
                   horizon = horizon,
+                  all_bands = all_bands,
+                  url_builder = url_builder,
+                  cycle = cycle,
                   mc.cores = getOption("mc.cores", 1L))
     dfs |>
       efi_format_cubeextract(date = date, sites = sites) |>
@@ -77,10 +95,9 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 #' @param bands named vector of band numbers, see [gefs_bands()]
 #' @export
 efi_format_cubeextract <- function(dfs,
-                                   date,
+                                   reference_datetime,
                                    sites = neon_sites(),
                                    bands = gefs_bands()) {
-
   sites_df <- sites |>
     tibble::as_tibble() |>
     dplyr::select("FID", "site_id")
@@ -96,7 +113,7 @@ efi_format_cubeextract <- function(dfs,
     dplyr::select(-FID) |>
     tidyr::pivot_longer(vars,
                         names_to = "variable", values_to = "prediction") |>
-    dplyr::mutate(reference_datetime = lubridate::as_date(date),
-                  horizon = datetime - lubridate::as_datetime(date))
+    dplyr::mutate(reference_datetime = lubridate::as_date(reference_datetime),
+                  horizon = datetime - lubridate::as_datetime(reference_datetime))
   df
 }

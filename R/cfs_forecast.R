@@ -35,6 +35,36 @@ cfs_bands <- function() {
     "PRES" = "x40")
 }
 
+
+
+#' cfs_to_parquet
+#'
+#' @param dates a vector of reference_datetimes
+#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
+#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
+#' @param partitioning partitioning structure used in writing the parquet data
+#' @inheritParams grib_extract
+#' @export
+cfs_to_parquet <- function(dates = Sys.Date() - 1L,
+                            path = "gefs_parquet",
+                            ensemble = cfs_ensemble(),
+                            bands = cfs_bands(),
+                            sites = neon_sites(),
+                            horizon = cfs_horizon(),
+                            all_bands = cfs_all_bands(),
+                            url_builder = cfs_urls,
+                            cycle = "00",
+                            partitioning = c("reference_datetime",
+                                             "site_id")) {
+
+  family <- "ensemble"
+  if(any(grepl("gespr", ensemble))) family <- "spread"
+  grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
+                  url_builder, cycle, partitioning)
+}
+
+cfs_ensemble <- function() 1:4
+
 cfs_s3_dir <- function(product,
                         path = "neon4cast-drivers/noaa/cfs/",
                         endpoint = "https://sdsc.osn.xsede.org",
@@ -98,7 +128,7 @@ cfs_grib_collection <- function(ens,
                         band_names = bands)
 }
 
-all_cfs_bands <- function() paste0("x", 1:103)
+cfs_all_bands <- function() paste0("x", 1:103)
 
 # extracted from example grb2 file:
 # "https://noaa-cfs-pds.s3.amazonaws.com/cfs.20181031/00/6hrly_grib_01/flxf2018103100.01.2018103100.grb2"

@@ -15,9 +15,13 @@ gdalcubes::gdalcubes_set_gdal_config("GDAL_NUM_THREADS", "ALL_CPUS")
 
 #' grib_extract
 #'
-#' @inheritParams gefs_grib_collection
 #' @param bands numeric vector of bands to extract, see details
 #' @param sites sf object of sites to extract
+#' @param all_bands names of all bands in grib file
+#' @param horizon vector of horizons to extract (in hours)
+#' @param url_builder helper function to construct remote URLs.
+#' Must be a function of ens, reference_datetime, horizon, cycle, and
+#' any named arguments passed via ...
 #' @return gdalcubes::image_collection()
 #' @details See <https://www.nco.ncep.noaa.gov/pmb/products/gens/> for
 #' details on GEFS data, including horizon, cycle, and band information.
@@ -26,21 +30,29 @@ gdalcubes::gdalcubes_set_gdal_config("GDAL_NUM_THREADS", "ALL_CPUS")
 #'
 #' @export
 grib_extract <-function(ens,
-                        date = Sys.Date(),
-                        sites = neon_sites(),
+                        reference_datetime = Sys.Date(),
                         bands = gefs_bands(),
+                        sites = neon_sites(),
                         horizon = gefs_horizon(),
+                        all_bands = gefs_all_bands(),
+                        url_builder = gefs_urls,
                         cycle = "00",
-
                         ...) {
 
   gdalcubes_cloud_config()
-  date <- lubridate::as_date(date)
-  gefs_grib_collection(ens, date, horizon, cycle) |>
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  date_time <- reference_datetime + lubridate::hours(horizon)
+
+  url_builder(ens, reference_datetime, horizon, cycle, ...) |>
+  gdalcubes::stack_cube(datetime_values = date_time,
+                        band_names = all_bands) |>
     gdalcubes::select_bands(bands) |>
     gdalcubes::extract_geom(sites)
 
 }
+
+
+
 
 #' mapping of gefs_bands to variable names
 #'
@@ -56,41 +68,7 @@ gefs_bands <- function() {
             "DLWRF" = "band79")
 }
 
-
-#' gefs_grib_collection
-#'
-#' Generate grib URLs for a requested forecast timeseries (geospatial data cube)
-#' as a [gdalcubes::image_collection()] object.
-#' @param ens ensemble the ensemble member to process, e.g. 'gepavg'
-#' can also be geavg (mean), gespr (esemble spread),
-#'  gec00 (control) or gep01-gep30 (perturbed)
-#' @param reference_datetime start date for forecast
-#' @param horizon list of horizon values, in hours (see [gefs_horizon()])
-#' @param cycle forecast cycle, GEFS forecasts are produced four times a day,
-#' at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
-#' Note that the control member, gec00, also has only a 16 day horizon
-#' @param ... additional arguments got create_image_collection
-#' @return gdalcubes::image_collection()
-#' @details <https://www.nco.ncep.noaa.gov/pmb/products/gens/>
-#'
-#' @export
-#'
-gefs_grib_collection <- function(ens,
-                                 reference_datetime = Sys.Date(),
-                                 horizon = gefs_horizon(),
-                                 band_names = all_gefs_bands(),
-                                 cycle = "00",
-                                 ...) {
-  reference_datetime <- lubridate::as_date(reference_datetime)
-  date_time <- reference_datetime + lubridate::hours(horizon)
-  urls <- gefs_urls(urls, reference_datetime, horizon, cycle)
-  gdalcubes::stack_cube(gribs,
-                        datetime_values = date_time,
-                        band_names = band_names, ...)
-
-}
-
-all_gefs_bands <- function() paste0("band", 1:85)
+gefs_all_bands <- function() paste0("band", 1:85)
 
 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
@@ -194,16 +172,26 @@ neon_sites <- function(crs = sf::st_crs(grib_wkt()) ) {
 # When high bandwidth is available, this is especially efficient format for
 # subsetting from full spatial data.
 grib_to_tif <- function(ens,
-                        date = Sys.Date(),
-                        cube = gefs_grib_collection(ens, date),
+                        reference_datetime = Sys.Date(),
+                        horizon = gefs_horizon(),
+                        cycle = "00",
                         dir = NULL,
-                        band = paste0("band", c(57, 63, 64, 67, 68, 69, 78, 79)),
+                        band = gefs_bands(),
+                        all_bands = gefs_all_bands(),
                         creation_options=list(COMPRESS="zstd")) {
 
   if(is.null(dir)) {
     dir <- fs::dir_create(paste0("gefs.", format(date, "%Y%m%d")))
   }
 
+  gdalcubes_cloud_config()
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  date_time <- reference_datetime + lubridate::hours(horizon)
+
+  url_builder(ens, reference_datetime, horizon, cycle) |>
+    gdalcubes::stack_cube(urls,
+                          datetime_values = date_time,
+                          band_names = all_bands)
   cube |>
     gdalcubes::select_bands(band) |>
     gdalcubes::write_tif(dir,
