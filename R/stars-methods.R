@@ -1,6 +1,4 @@
 # These methods seek to imitate gdalcubes in pure `stars`
-# The performance of these methods is considerably poorer
-
 
 select_bands_ <- function(r, bands){
   r[,,,unname(bands)]
@@ -36,25 +34,94 @@ extract_sites_ <- function(r, sites, variable_dimension = 3) {
 }
 
 
-gefs_band_numbers <- function(){
-  c(57,63,64,67:69,78,79)
+# NB  stars_to_parquet is parallelized over horizon,
+# while grib_to_parquet (gdalcubes) is threaded over horizon by gdalcubes,
+# and parallelized over ensemble.
+gefs_stars <- function(dates = Sys.Date()-1,
+                             path = "gefs_stars",
+                             ensemble = gefs_ensemble(),
+                             bands = gefs_band_numbers(),
+                             sites = neon_sites(),
+                             horizon = gefs_horizon(),
+                             cycle = "00",
+                             url_builder = gefs_urls,
+                             family = "ensemble",
+                             partitioning = c("reference_datetime",
+                                              "site_id"),
+                             ...) {
+  stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
+                   url_builder, family, partitioning)
 }
 
 
-gefs_stars_extract <- function(ens,
-                               reference_datetime = Sys.Date()-1,
-                               horizon = gefs_horizon(),
-                               bands = gefs_band_numbers(),
-                               cycle = "00",
-                               sites = neon_sites(),
-                               family = "ensemble",
-                               ...) {
+cfs_stars <- function(dates = Sys.Date()-1,
+                       path = "cfs_stars",
+                       ensemble = cfs_ensemble(),
+                       bands = cfs_band_numbers(),
+                       sites = neon_sites() |> sf::st_shift_longitude(),
+                       horizon = cfs_horizon(),
+                       cycle = "00",
+                       url_builder = cfs_urls,
+                       family = "ensemble",
+                       partitioning = c("reference_datetime",
+                                        "site_id"),
+                       ...) {
+  stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
+                   url_builder, family, partitioning)
+}
+
+stars_to_parquet <- function(dates,
+                             path,
+                             ensemble,
+                             bands,
+                             sites,
+                             horizon,
+                             cycle = "00",
+                             url_builder,
+                             family = "ensemble",
+                             partitioning = c("reference_datetime",
+                                              "site_id"),
+                             ...) {
+
+  lapply(dates, function(date) {
+    message(date)
+    tryCatch({
+      dfs <- lapply(ensemble,
+                    stars_extract,
+                    reference_datetime = date,
+                    bands = bands,
+                    sites = sites,
+                    horizon = horizon,
+                    url_builder = url_builder,
+                    cycle = cycle)
+      dfs |>
+        purrr::list_rbind() |>
+        arrow::write_dataset(path,
+                             partitioning = partitioning)
+    },
+    error = function(e) warning(paste("date", date, "failed with:\n", e),
+                                call.=FALSE),
+    finally=NULL)
+    invisible(date)
+  })
+}
+
+stars_extract <- function(ens,
+                          reference_datetime = Sys.Date()-1,
+                          horizon,
+                          bands,
+                          cycle = "00",
+                          sites = neon_sites(),
+                          url_builder,
+                          family = "ensemble",
+                          ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
-  gefs_extract <- purrr::possibly(function(h, quiet=FALSE) {
-    gefs_urls(ens = ens,
+  extract_possibly <- purrr::possibly(function(h, quiet=FALSE) {
+    url_builder(ens = ens,
               reference_datetime = reference_datetime,
               horizon = h,
-              cycle = cycle) |>
+              cycle = cycle,
+              ...) |>
       stars::read_stars() |>
       select_bands_(bands) |>
       extract_sites_(sites) |>
@@ -63,51 +130,27 @@ gefs_stars_extract <- function(ens,
                     reference_datetime = reference_datetime,
                     family=family)
   })
+
   parallel::mclapply(horizon,
-                     gefs_extract,
+                     extract_possibly,
                      mc.cores = getOption("mc.cores", 1L)
-  ) |>
+                    ) |>
     purrr::list_rbind()
 }
 
+cfs_band_numbers <- function() c(31, 36:40)
 
-cfs_stars_extract <- function(ens,
-                              reference_datetime = Sys.Date()-1,
-                              horizon = lubridate::days(200),
-                              cycle = "00",
-                              sites = neon_sites(),
-                              family = "ensemble",
-                              interval="6hrly",
-                              ...) {
-  assert_gdal_version()
-  reference_datetime <- lubridate::as_date(reference_datetime)
-  date_times <- cfs_horizon(reference_datetime, horizon)
-  sites <- sites |>
-    sf::st_transform(crs = sf::st_crs(grib_wkt())) |>
-    dplyr::select("site_id", "geometry")
 
-  bands <- c(31, 36:40)
-
-  cfs_extract <- purrr::possibly(function(datetime, quiet=FALSE) {
-    cfs_url(datetime,
-            ens = ens,
-            reference_datetime,
-            cycle,
-            ...) |>
-      stars::read_stars() |>
-      select_bands_(bands) |>
-      extract_sites_(sites) |>
-      dplyr::mutate(parameter = ens,
-                    datetime = datetime,
-                    reference_datetime = reference_datetime,
-                    family="ensemble")
-  })
-
-  parallel::mclapply(date_times,
-                     cfs_extract,
-                     mc.cores = getOption("mc.cores", 1L)
-  ) |>
-    purrr::list_rbind()
-
+gefs_band_numbers <- function(){
+  c(57,63,64,67:69,78,79)
 }
+
+
+
+
+
+
+
+
+
 

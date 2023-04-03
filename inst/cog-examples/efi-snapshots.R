@@ -1,15 +1,10 @@
-# Stage 1:
-# Compute only mean and std for every historic date
-#
-# Partition: gefs-v12/stage-stats/reference_datetime/site
-
 
 library(gdalcubes)
 gdalcubes_options(parallel=TRUE)
 devtools::load_all()
 
-
-# c6in.4xlarge: 24 seconds
+# c6in.4xlarge: ~ 14 - 24 sec, 4 cores
+# cirrus: 47 sec
 options("mc.cores"=4L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-31,
@@ -24,19 +19,20 @@ bench::bench_time({
 # c6in.4xlarge, 8 cores: 2.8min
 options("mc.cores"=8)
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-29, ensemble = gefs_ensemble())
+  gefs_to_parquet(Sys.Date()-32, ensemble = gefs_ensemble())
 })
 
+
 # c6in.4xlarge 2.7GB/s, 4 cores 14 min (31 member ensemble)
-options("mc.cores"=6)
+options("mc.cores"=64)
 ensemble = c(mean = "geavg", spr = "gespr")
-ensemble = gefs_ensemble()
+#ensemble = gefs_ensemble()
 bench::bench_time({
-  dfs <- parallel::mclapply(ensemble,
-                            gefs_stars_extract,
-           reference_datetime = Sys.Date() - 20,
-           mc.cores = getOption("mc.cores", 1L))
+  gefs_stars(Sys.Date()-22, ensemble =ensemble)
 })
+
+
+
 
 # c6in.4xlarge: 24 seconds
 options("mc.cores"=1L)

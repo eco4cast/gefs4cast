@@ -14,6 +14,7 @@ cfs_to_parquet(
   all_bands = cfs_all_bands(),
   url_builder = cfs_urls,
   cycle = "00",
+  family = "ensemble",
   partitioning = c("reference_datetime", "site_id")
 )
 }
