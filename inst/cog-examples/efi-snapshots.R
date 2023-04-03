@@ -24,21 +24,30 @@ bench::bench_time({
 
 
 # c6in.4xlarge 2.7GB/s, 4 cores 14 min (31 member ensemble)
-options("mc.cores"=64)
+options("mc.cores"=parallel::detectCores())
 ensemble = c(mean = "geavg", spr = "gespr")
 #ensemble = gefs_ensemble()
 bench::bench_time({
-  gefs_stars(Sys.Date()-22, ensemble =ensemble)
+  gefs_stars(Sys.Date()-33, ensemble =ensemble[[1]])
 })
 
 
 
 
 # c6in.4xlarge: 24 seconds
-options("mc.cores"=1L)
+options("mc.cores"=2L)
 bench::bench_time({
   gefs_to_parquet(Sys.Date()-2,
                   ensemble = c(mean = "geavg", spr = "gespr"),
                   sites = neon_sites())
 })
 
+
+
+bench::bench_time({
+  df <- stars_extract("geavg",
+                      reference_datetime = Sys.Date()-32,
+                      horizon = gefs_horizon(),
+                      bands = gefs_band_numbers(),
+                      url_builder = gefs_urls)
+})

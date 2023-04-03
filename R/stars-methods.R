@@ -34,41 +34,6 @@ extract_sites_ <- function(r, sites, variable_dimension = 3) {
 }
 
 
-# NB  stars_to_parquet is parallelized over horizon,
-# while grib_to_parquet (gdalcubes) is threaded over horizon by gdalcubes,
-# and parallelized over ensemble.
-gefs_stars <- function(dates = Sys.Date()-1,
-                             path = "gefs_stars",
-                             ensemble = gefs_ensemble(),
-                             bands = gefs_band_numbers(),
-                             sites = neon_sites(),
-                             horizon = gefs_horizon(),
-                             cycle = "00",
-                             url_builder = gefs_urls,
-                             family = "ensemble",
-                             partitioning = c("reference_datetime",
-                                              "site_id"),
-                             ...) {
-  stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
-                   url_builder, family, partitioning)
-}
-
-
-cfs_stars <- function(dates = Sys.Date()-1,
-                       path = "cfs_stars",
-                       ensemble = cfs_ensemble(),
-                       bands = cfs_band_numbers(),
-                       sites = neon_sites() |> sf::st_shift_longitude(),
-                       horizon = cfs_horizon(),
-                       cycle = "00",
-                       url_builder = cfs_urls,
-                       family = "ensemble",
-                       partitioning = c("reference_datetime",
-                                        "site_id"),
-                       ...) {
-  stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
-                   url_builder, family, partitioning)
-}
 
 stars_to_parquet <- function(dates,
                              path,
@@ -83,11 +48,11 @@ stars_to_parquet <- function(dates,
                                               "site_id"),
                              ...) {
 
-  lapply(dates, function(date) {
+  lapply(dates, function(date) { # loop over reference_datetimes if needed
     message(date)
     tryCatch({
-      dfs <- lapply(ensemble,
-                    stars_extract,
+      dfs <- lapply(ensemble, # loop over ensembles
+                    stars_extract, # parallellized over horizon
                     reference_datetime = date,
                     bands = bands,
                     sites = sites,
@@ -96,6 +61,7 @@ stars_to_parquet <- function(dates,
                     cycle = cycle)
       dfs |>
         purrr::list_rbind() |>
+        dplyr::select(-geometry) |> # cannot write list-cols to arrow
         arrow::write_dataset(path,
                              partitioning = partitioning)
     },
