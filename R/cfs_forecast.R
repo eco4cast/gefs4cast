@@ -54,13 +54,12 @@ cfs_to_parquet <- function(dates = Sys.Date() - 1L,
                             all_bands = cfs_all_bands(),
                             url_builder = cfs_urls,
                             cycle = "00",
+                           family = "ensemble",
                             partitioning = c("reference_datetime",
                                              "site_id")) {
 
-  family <- "ensemble"
-  if(any(grepl("gespr", ensemble))) family <- "spread"
   grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
-                  url_builder, cycle, partitioning)
+                  url_builder, cycle, family, partitioning)
 }
 
 cfs_ensemble <- function() 1:4

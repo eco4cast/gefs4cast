@@ -10,9 +10,9 @@ devtools::load_all()
 
 
 # c6in.4xlarge: 24 seconds
-options("mc.cores"=1L)
+options("mc.cores"=4L)
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-2,
+  gefs_to_parquet(Sys.Date()-31,
                   ensemble = c(mean = "geavg", spr = "gespr"),
                   sites = neon_sites())
 })

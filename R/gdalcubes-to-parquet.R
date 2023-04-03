@@ -45,7 +45,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
   grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
-                  url_builder, cycle, partitioning)
+                  url_builder, cycle, family, partitioning)
 }
 
 grib_to_parquet <- function(dates = Sys.Date() - 1L,
@@ -57,6 +57,7 @@ grib_to_parquet <- function(dates = Sys.Date() - 1L,
                             all_bands,
                             url_builder,
                             cycle = "00",
+                            family = "ensemble",
                             partitioning = c("reference_datetime",
                                              "site_id")) {
   lapply(dates, function(date) {
@@ -73,7 +74,9 @@ grib_to_parquet <- function(dates = Sys.Date() - 1L,
                   cycle = cycle,
                   mc.cores = getOption("mc.cores", 1L))
     dfs |>
-      efi_format_cubeextract(date = date, sites = sites) |>
+      efi_format_cubeextract(reference_datetime = date,
+                             sites = sites,
+                             bands = bands) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path,
                            partitioning = partitioning)
