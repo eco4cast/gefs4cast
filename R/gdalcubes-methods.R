@@ -16,17 +16,13 @@ gdalcubes::gdalcubes_set_gdal_config("GDAL_NUM_THREADS", "ALL_CPUS")
 #' grib_extract
 #'
 #' @inheritParams gefs_grib_collection
-#' @inheritDotParams gefs_view
 #' @param bands numeric vector of bands to extract, see details
 #' @param sites sf object of sites to extract
 #' @return gdalcubes::image_collection()
 #' @details See <https://www.nco.ncep.noaa.gov/pmb/products/gens/> for
 #' details on GEFS data, including horizon, cycle, and band information.
 #' This function is a simple wrapper around
-#' [gdalcubes::extract_geom()].  Users can instead construct their own
-#' gdalcubes image_collection with [gefs_grib_collection()] and cube view
-#' (e.g. with [gefs_view()]), and then use [gdalcubes::raster_cube()] in
-#' pipe-chain operations with any other gdalcubes functionality.
+#' [gdalcubes::extract_geom()]. .
 #'
 #' @export
 grib_extract <-function(ens,
@@ -200,7 +196,6 @@ neon_sites <- function(crs = sf::st_crs(grib_wkt()) ) {
 grib_to_tif <- function(ens,
                         date = Sys.Date(),
                         cube = gefs_grib_collection(ens, date),
-                        view = gefs_view(date),
                         dir = NULL,
                         band = paste0("band", c(57, 63, 64, 67, 68, 69, 78, 79)),
                         creation_options=list(COMPRESS="zstd")) {
@@ -209,7 +204,7 @@ grib_to_tif <- function(ens,
     dir <- fs::dir_create(paste0("gefs.", format(date, "%Y%m%d")))
   }
 
-  gdalcubes::raster_cube(cube, view) |>
+  cube |>
     gdalcubes::select_bands(band) |>
     gdalcubes::write_tif(dir,
                          prefix=paste0(ens, ".t00z.pgrb2a.0p50.f"),

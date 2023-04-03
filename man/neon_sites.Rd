@@ -4,7 +4,7 @@
 \alias{neon_sites}
 \title{NEON sites as a simple features point geometry object}
 \usage{
-neon_sites()
+neon_sites(crs = sf::st_crs(grib_wkt()))
 }
 \value{
 an sf object with coordinates for NEON sites

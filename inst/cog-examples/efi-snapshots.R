@@ -17,7 +17,7 @@ bench::bench_time({
 })
 
 # c6in.4xlarge 2.7GB/s, 4 cores 39.6 min (geavg/gespr members)
-options("mc.cores"=64)
+options("mc.cores"=12)
 #ensemble = c(mean = "geavg", spr = "gespr")
 ensemble = gefs_ensemble()
 bench::bench_time({

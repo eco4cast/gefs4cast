@@ -6,8 +6,9 @@
 \usage{
 gefs_grib_collection(
   ens,
-  date = Sys.Date(),
+  reference_datetime = Sys.Date(),
   horizon = gefs_horizon(),
+  band_names = all_gefs_bands(),
   cycle = "00",
   ...
 )
@@ -17,7 +18,7 @@ gefs_grib_collection(
 can also be geavg (mean), gespr (esemble spread),
 gec00 (control) or gep01-gep30 (perturbed)}
 
-\item{date}{start date}
+\item{reference_datetime}{start date for forecast}
 
 \item{horizon}{list of horizon values, in hours (see \code{\link[=gefs_horizon]{gefs_horizon()}})}
 

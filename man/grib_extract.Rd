@@ -19,8 +19,6 @@ grib_extract(
 can also be geavg (mean), gespr (esemble spread),
 gec00 (control) or gep01-gep30 (perturbed)}
 
-\item{date}{start date}
-
 \item{sites}{sf object of sites to extract}
 
 \item{bands}{numeric vector of bands to extract, see details}
@@ -31,18 +29,7 @@ gec00 (control) or gep01-gep30 (perturbed)}
 at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
 Note that the control member, gec00, also has only a 16 day horizon}
 
-\item{...}{
-  Arguments passed on to \code{\link[=gefs_view]{gefs_view}}
-  \describe{
-    \item{\code{t0}}{start time (Date or datetime object)}
-    \item{\code{t1}}{end time. 35 days after start by default.}
-    \item{\code{box}}{bounding box giving (xmin, ymin, xmax, ymax) numeric vector
-(or an sf_bbox object)}
-    \item{\code{dx}}{resolution, x-coordinate}
-    \item{\code{dy}}{resolution, y-coordinate}
-    \item{\code{dt}}{resolution, time coordinate, ISO8601 temporal-duration notation}
-    \item{\code{crs}}{Coordinate reference system (string)}
-  }}
+\item{...}{additional arguments got create_image_collection}
 }
 \value{
 gdalcubes::image_collection()
@@ -54,8 +41,5 @@ grib_extract
 See \url{https://www.nco.ncep.noaa.gov/pmb/products/gens/} for
 details on GEFS data, including horizon, cycle, and band information.
 This function is a simple wrapper around
-\code{\link[gdalcubes:extract_geom]{gdalcubes::extract_geom()}}.  Users can instead construct their own
-gdalcubes image_collection with \code{\link[=gefs_grib_collection]{gefs_grib_collection()}} and cube view
-(e.g. with \code{\link[=gefs_view]{gefs_view()}}), and then use \code{\link[gdalcubes:raster_cube]{gdalcubes::raster_cube()}} in
-pipe-chain operations with any other gdalcubes functionality.
+\code{\link[gdalcubes:extract_geom]{gdalcubes::extract_geom()}}. .
 }
