@@ -23,12 +23,13 @@ bench::bench_time({
 })
 
 
-# c6in.4xlarge 2.7GB/s, 4 cores 14 min (31 member ensemble)
-options("mc.cores"=parallel::detectCores())
+# c6in.4xlarge max 1.7GB/s, 2*detectCores(),  (31 member ensemble)
+# 43 sec 2 ensemble members
+options("mc.cores"=parallel::detectCores()*2)
 ensemble = c(mean = "geavg", spr = "gespr")
-#ensemble = gefs_ensemble()
+ensemble = gefs_ensemble()
 bench::bench_time({
-  gefs_stars(Sys.Date()-33, ensemble =ensemble[[1]])
+  gefs_stars(Sys.Date()-33, ensemble =ensemble)
 })
 
 
