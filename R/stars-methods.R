@@ -75,8 +75,9 @@ cfs_stars_extract <- function(ens,
                               reference_datetime = Sys.Date()-1,
                               horizon = lubridate::days(200),
                               cycle = "00",
-                              interval="6hrly",
                               sites = neon_sites(),
+                              family = "ensemble",
+                              interval="6hrly",
                               ...) {
   assert_gdal_version()
   reference_datetime <- lubridate::as_date(reference_datetime)
@@ -92,7 +93,7 @@ cfs_stars_extract <- function(ens,
             ens = ens,
             reference_datetime,
             cycle,
-            interval) |>
+            ...) |>
       stars::read_stars() |>
       select_bands_(bands) |>
       extract_sites_(sites) |>

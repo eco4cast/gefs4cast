@@ -52,7 +52,7 @@ grib_to_parquet <- function(dates = Sys.Date() - 1L,
                             path = "noaa",
                             ensemble,
                             bands,
-                            sites = neon_sites(),
+                            sites,
                             horizon,
                             all_bands,
                             url_builder,
@@ -77,8 +77,10 @@ grib_to_parquet <- function(dates = Sys.Date() - 1L,
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path,
                            partitioning = partitioning)
-    }, error = function(e) warning(paste("date", date, "failed")),
-                                   finally=NULL)
+    },
+    error = function(e) warning(paste("date", date, "failed with:\n", e),
+                                call.=FALSE),
+    finally=NULL)
 
   invisible(date)
   })

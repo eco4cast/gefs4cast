@@ -6,30 +6,28 @@
 \usage{
 grib_extract(
   ens,
-  date = Sys.Date(),
-  sites = neon_sites(),
+  reference_datetime = Sys.Date(),
   bands = gefs_bands(),
+  sites = neon_sites(),
   horizon = gefs_horizon(),
+  all_bands = gefs_all_bands(),
+  url_builder = gefs_urls,
   cycle = "00",
   ...
 )
 }
 \arguments{
-\item{ens}{ensemble the ensemble member to process, e.g. 'gepavg'
-can also be geavg (mean), gespr (esemble spread),
-gec00 (control) or gep01-gep30 (perturbed)}
+\item{bands}{numeric vector of bands to extract, see details}
 
 \item{sites}{sf object of sites to extract}
 
-\item{bands}{numeric vector of bands to extract, see details}
+\item{horizon}{vector of horizons to extract (in hours)}
 
-\item{horizon}{list of horizon values, in hours (see \code{\link[=gefs_horizon]{gefs_horizon()}})}
+\item{all_bands}{names of all bands in grib file}
 
-\item{cycle}{forecast cycle, GEFS forecasts are produced four times a day,
-at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
-Note that the control member, gec00, also has only a 16 day horizon}
-
-\item{...}{additional arguments got create_image_collection}
+\item{url_builder}{helper function to construct remote URLs.
+Must be a function of ens, reference_datetime, horizon, cycle, and
+any named arguments passed via ...}
 }
 \value{
 gdalcubes::image_collection()
