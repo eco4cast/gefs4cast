@@ -7,16 +7,16 @@ devtools::load_all()
 
 # c6in.4xlarge:
 # cirrus:
-options("mc.cores"=4L)
+options("mc.cores"=1L)
 bench::bench_time({
-  cfs_to_parquet(Sys.Date()-4)
+  cfs_to_parquet(Sys.Date()-5,  horizon = cfs_horizon)
 })
 
 
 bench::bench_time({
   df <- stars_extract("1",
                       reference_datetime = Sys.Date()-32,
-                      horizon = cfs_horizon(),
+                      horizon = cfs_horizon,
                       bands = cfs_band_numbers(),
                       url_builder = cfs_urls)
 })
@@ -25,7 +25,7 @@ bench::bench_time({
 
 
 dfs <- grib_extract("1",
-                    reference_datetime = Sys.Date()-4,
+                    reference_datetime = Sys.Date()-1,
                     bands = cfs_bands(),
                     sites = neon_sites() |> sf::st_shift_longitude(),
                     horizon = cfs_horizon(),
@@ -47,7 +47,7 @@ gdalcubes_cloud_config()
 reference_datetime <- lubridate::as_date(reference_datetime)
 date_time <- reference_datetime + lubridate::hours(horizon)
 
-cfs_urls(ens, reference_datetime, horizon, cycle, ...) |>
+cfs_urls(ens, reference_datetime, horizon, cycle) |>
   gdalcubes::stack_cube(datetime_values = date_time,
                         band_names = all_bands) |>
   gdalcubes::select_bands(bands) |>
@@ -55,20 +55,25 @@ cfs_urls(ens, reference_datetime, horizon, cycle, ...) |>
 
 
 
-library(arrow)
-reference_datetime <- Sys.Date()-1
-ens <- 1
-ref_datetime <- format(reference_datetime, "%Y%m%d")
-s3 <- s3_bucket(glue::glue("noaa-cfs-pds/cfs.{ref_datetime}/00/6hrly_grib_0{ens}/"), anonymous=TRUE)
-all_gribs <- s3$ls()
-flxf <- all_gribs[ grepl("flxf\\d{10}.*\\.grb2$", all_gribs) ]
-horizons <- gsub(paste0("flxf(\\d{10})\\.0", ens, "\\.(\\d{10})\\.grb2"), "\\1", flxf) |> lubridate::as_datetime(format="%Y%m%d%H")
+reference_datetime <- Sys.Date()-4
+ens <- 3
+cfs_horizon_days <- function(ens=1, reference_datetime = Sys.Date()-2) {
+  ref_datetime <- format(reference_datetime, "%Y%m%d")
+  s3 <- arrow::s3_bucket(glue::glue("noaa-cfs-pds/cfs.{ref_datetime}/00/6hrly_grib_0{ens}/"), anonymous=TRUE)
+  all_gribs <- s3$ls()
+  flxf <- all_gribs[ grepl("flxf\\d{10}.*\\.grb2$", all_gribs) ]
+  horizons <- gsub(paste0("flxf(\\d{10})\\.0", ens,
+                          "\\.(\\d{10})\\.grb2"), "\\1", flxf) |>
+    lubridate::as_datetime(format="%Y%m%d%H")
+  diff <- horizons - lubridate::as_datetime(reference_datetime)
+  units(diff) <- "days"
+  max(diff)
+}
 
-diff <- horizons - lubridate::as_datetime(reference_datetime)
-units(diff) <- "days"
-diff
+b <- reference_datetime + lubridate::hours(cfs_horizon())
 
-b <- reference_datetime + horizon
+length(b) < length(horizons)
+any(b)
 
 ## examine
 

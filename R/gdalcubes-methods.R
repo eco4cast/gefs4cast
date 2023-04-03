@@ -40,6 +40,11 @@ grib_extract <-function(ens,
                         ...) {
 
   gdalcubes_cloud_config()
+
+  if(is.function(horizon)){
+    horizon <- horizon(ens, reference_datetime)
+  }
+
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_time <- reference_datetime + lubridate::hours(horizon)
 
@@ -98,7 +103,7 @@ gefs_urls <- function(ens,
 #' gefs_horizon
 #' @return list of horizon values (for cycle 00, gepNN forecasts)
 #' @export
-gefs_horizon <- function() {
+gefs_horizon <- function(...) {
   c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
     stringr::str_pad(seq(246,840,by=6), 3, pad="0"))
 }

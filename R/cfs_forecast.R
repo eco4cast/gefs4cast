@@ -100,24 +100,44 @@ cfs_url <- function(datetime,
               "{cycle}/{interval}_grib_0{ens}/{file}")
 }
 
-cfs_horizon <- function(horizon_hours = 24 * 200L, interval_hours=6) {
+cfs_horizon <- function(ens = 1, reference_datetime = Sys.Date()-1) {
+
+  month_horizon <- 7
+  if(as.integer(ens) > 1){
+    month_horizon <- 4
+  }
+
+  reference_datetime <- lubridate::as_date(reference_datetime)
+  m <- lubridate::month(reference_datetime) + month_horizon
+  y <- lubridate::year(reference_datetime)
+  end <- lubridate::as_date(paste(y, m, "01", sep="-"))
+  days <- end - reference_datetime
+  units(days) <- "days"
+  horizon_hours = 24 * as.integer(days)
+  interval_hours=6
+
   as.character(seq(interval_hours, horizon_hours, by = interval_hours))
 }
 
+
 cfs_urls <- function(ens = 1,
-                     reference_datetime=Sys.Date()-2,
-                     horizon = cfs_horizon(),
+                     reference_datetime=Sys.Date()-4,
+                     horizon = NULL, # ignored, calculated dynamically
                      cycle = "00",
                      interval = "6hrly") {
+
+  dynamic_horizon = cfs_horizon(ens, reference_datetime)
   datetimes <-
     lubridate::as_datetime(reference_datetime) +
-    lubridate::hours(horizon)
-  datetimes |>
+    lubridate::hours(dynamic_horizon)
+  urls <- datetimes |>
     purrr::map_chr(cfs_url,
            ens = ens,
            reference_datetime = reference_datetime,
            cycle = cycle,
            interval = interval)
+
+  urls
 }
 
 cfs_all_bands <- function() paste0("x", 1:103)

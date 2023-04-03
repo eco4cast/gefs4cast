@@ -82,6 +82,11 @@ stars_extract <- function(ens,
                           family = "ensemble",
                           ...) {
   reference_datetime <- lubridate::as_date(reference_datetime)
+
+  if(is.function(horizon)){
+    horizon <- horizon(ens, reference_datetime)
+  }
+
   extract_possibly <- purrr::possibly(function(h, quiet=FALSE) {
     url_builder(ens = ens,
               reference_datetime = reference_datetime,
