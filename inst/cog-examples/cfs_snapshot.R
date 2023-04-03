@@ -1,8 +1,36 @@
 
+library(gdalcubes)
+gdalcubes_options(parallel=TRUE)
 devtools::load_all()
-options("mc.cores"=parallel::detectCores())
+
+#options("mc.cores"=parallel::detectCores())
 
 
+bench::bench_time({
+  df <- stars_extract(1,
+                      reference_datetime = Sys.Date()-32,
+                      horizon = cfs_horizon(),
+                      bands = cfs_band_numbers(),
+                      url_builder = cfs_url)
+})
+
+
+# c6in.4xlarge: ~ 14 - 24 sec, 4 cores
+# cirrus: 47 sec
+options("mc.cores"=4L)
+bench::bench_time({
+  cfs_to_parquet(Sys.Date()-2,
+                  sites = neon_sites())
+})
+
+
+
+
+
+
+
+
+## examine
 
 library(tidyverse)
 library(arrow)

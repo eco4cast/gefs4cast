@@ -32,6 +32,8 @@ cfs_stars <- function(dates = Sys.Date()-1,
                       partitioning = c("reference_datetime",
                                        "site_id"),
                       ...) {
+  assert_gdal_version()
+
   stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
                    url_builder, family, partitioning)
 }

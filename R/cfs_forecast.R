@@ -58,11 +58,13 @@ cfs_to_parquet <- function(dates = Sys.Date() - 1L,
                             partitioning = c("reference_datetime",
                                              "site_id")) {
 
+  assert_gdal_version("3.6.0") # needed for grb2 over vsicurl
+
   grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
                   url_builder, cycle, family, partitioning)
 }
 
-cfs_ensemble <- function() 1:4
+cfs_ensemble <- function() as.character(1:4)
 
 cfs_s3_dir <- function(product,
                         path = "neon4cast-drivers/noaa/cfs/",
@@ -109,8 +111,13 @@ cfs_urls <- function(ens = 1,
                      horizon = cfs_horizon(),
                      cycle = "00",
                      interval = "6hrly") {
-  lubridate::as_datetime(reference_datetime) + horizon |>
-    purrr::map_chr(cfs_url, ens, reference_datetime, cycle, interval)
+  datetimes <- lubridate::as_datetime(reference_datetime) + horizon
+  datetimes |>
+    purrr::map_chr(cfs_url,
+           ens = ens,
+           reference_datetime = reference_datetime,
+           cycle = cycle,
+           interval = interval)
 }
 
 cfs_grib_collection <- function(ens,
