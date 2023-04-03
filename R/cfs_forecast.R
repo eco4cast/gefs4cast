@@ -46,10 +46,10 @@ cfs_bands <- function() {
 #' @inheritParams grib_extract
 #' @export
 cfs_to_parquet <- function(dates = Sys.Date() - 1L,
-                            path = "gefs_parquet",
+                            path = "cfs_parquet",
                             ensemble = cfs_ensemble(),
                             bands = cfs_bands(),
-                            sites = neon_sites(),
+                            sites = neon_sites() |> sf::st_shift_longitude(),
                             horizon = cfs_horizon(),
                             all_bands = cfs_all_bands(),
                             url_builder = cfs_urls,
@@ -98,12 +98,10 @@ cfs_url <- function(datetime,
    ref_date <- format(reference_datetime, "%Y%m%d")
    glue::glue("/vsicurl/{base}/cfs.{ref_date}/",
               "{cycle}/{interval}_grib_0{ens}/{file}")
-
 }
 
-
 cfs_horizon <- function(horizon_hours = 24 * 200L, interval_hours=6) {
-  lubridate::hours(seq(interval_hours, horizon_hours, by = interval_hours))
+  as.character(seq(interval_hours, horizon_hours, by = interval_hours))
 }
 
 cfs_urls <- function(ens = 1,
@@ -111,27 +109,15 @@ cfs_urls <- function(ens = 1,
                      horizon = cfs_horizon(),
                      cycle = "00",
                      interval = "6hrly") {
-  datetimes <- lubridate::as_datetime(reference_datetime) + horizon
+  datetimes <-
+    lubridate::as_datetime(reference_datetime) +
+    lubridate::hours(horizon)
   datetimes |>
     purrr::map_chr(cfs_url,
            ens = ens,
            reference_datetime = reference_datetime,
            cycle = cycle,
            interval = interval)
-}
-
-cfs_grib_collection <- function(ens,
-                                reference_datetime = Sys.Date()-1,
-                                horizon = cfs_horizon(),
-                                bands = all_cfs_bands(),
-                                cycle = "00",
-                                ...) {
-  reference_datetime <- lubridate::as_date(reference_datetime)
-  date_time <- reference_datetime + cfs_horizon()
-  urls <- cfs_urls(ens, reference_datetime, horizon, cycle, ...)
-  gdalcubes::stack_cube(urls,
-                        datetime_values = date_time,
-                        band_names = bands)
 }
 
 cfs_all_bands <- function() paste0("x", 1:103)
