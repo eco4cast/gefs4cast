@@ -79,13 +79,15 @@ cfs_s3_dir <- function(product,
   s3_dir
 }
 
-cfs_url <- function(datetime,
+cfs_url <- function(horizon,
                     ens = 1,
                     reference_datetime=Sys.Date()-2,
                     cycle = "00",
                     interval = "6hrly") {
 
    base = "https://noaa-cfs-pds.s3.amazonaws.com"
+
+   datetime <- reference_datetime + lubridate::hours(horizon)
    file <-
      glue::glue("flxf",
                 format(datetime, "%Y%m%d"),
@@ -127,10 +129,7 @@ cfs_urls <- function(ens = 1,
                      interval = "6hrly") {
 
   dynamic_horizon = cfs_horizon(ens, reference_datetime)
-  datetimes <-
-    lubridate::as_datetime(reference_datetime) +
-    lubridate::hours(dynamic_horizon)
-  urls <- datetimes |>
+  urls <- dynamic_horizon |>
     purrr::map_chr(cfs_url,
            ens = ens,
            reference_datetime = reference_datetime,
@@ -163,4 +162,24 @@ assert_gdal_version <- function(version = "3.6.0") {
     stop(paste("gdal v", version,
                "is required, but detected gdal v", gdal_version), call. = FALSE)
   }
+}
+
+
+
+
+
+## Use AWS to check which files exist
+cfs_horizon_days <- function(ens=1, reference_datetime = Sys.Date()-2) {
+  ref_datetime <- format(reference_datetime, "%Y%m%d")
+  s3 <-
+    glue::glue("noaa-cfs-pds/cfs.{ref_datetime}/00/6hrly_grib_0{ens}/") |>
+    arrow::s3_bucket(anonymous=TRUE)
+  all_gribs <- s3$ls()
+  flxf <- all_gribs[ grepl("flxf\\d{10}.*\\.grb2$", all_gribs) ]
+  horizons <- gsub(paste0("flxf(\\d{10})\\.0", ens,
+                          "\\.(\\d{10})\\.grb2"), "\\1", flxf) |>
+    lubridate::as_datetime(format="%Y%m%d%H")
+  diff <- horizons - lubridate::as_datetime(reference_datetime)
+  units(diff) <- "days"
+  max(diff)
 }

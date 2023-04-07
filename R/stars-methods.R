@@ -35,43 +35,6 @@ extract_sites_ <- function(r, sites, variable_dimension = 3) {
 
 
 
-stars_to_parquet <- function(dates,
-                             path,
-                             ensemble,
-                             bands,
-                             sites,
-                             horizon,
-                             cycle = "00",
-                             url_builder,
-                             family = "ensemble",
-                             partitioning = c("reference_datetime",
-                                              "site_id"),
-                             ...) {
-
-  lapply(dates, function(date) { # loop over reference_datetimes if needed
-    message(date)
-    tryCatch({
-      dfs <- lapply(ensemble, # loop over ensembles
-                    stars_extract, # parallellized over horizon
-                    reference_datetime = date,
-                    bands = bands,
-                    sites = sites,
-                    horizon = horizon,
-                    url_builder = url_builder,
-                    cycle = cycle)
-      dfs |>
-        purrr::list_rbind() |>
-        dplyr::select(-geometry) |> # cannot write list-cols to arrow
-        arrow::write_dataset(path,
-                             partitioning = partitioning)
-    },
-    error = function(e) warning(paste("date", date, "failed with:\n", e),
-                                call.=FALSE),
-    finally=NULL)
-    invisible(date)
-  })
-}
-
 stars_extract <- function(ens,
                           reference_datetime = Sys.Date()-1,
                           horizon,

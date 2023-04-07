@@ -2,14 +2,17 @@
 library(gdalcubes)
 gdalcubes_options(parallel=TRUE)
 devtools::load_all()
-
+#vis4cast::ignore_sigpipe()
 #options("mc.cores"=parallel::detectCores())
 
 # c6in.4xlarge:
-# cirrus:
-options("mc.cores"=1L)
+# cirrus: 5 min all 128 cores 2x overload or 2
+dates <- Sys.Date()-3 # seq(as.Date("2023-04-04"), as.Date("2023-04-06"), by=1)
+gdalcubes_options(parallel=2*parallel::detectCores())
+
+s3 <- "cfs_parquet" # cfs_s3_dir("6hrly/00")
 bench::bench_time({
-  cfs_to_parquet(Sys.Date()-2,  horizon = cfs_horizon)
+  cfs_to_parquet(dates,  horizon = cfs_horizon, path = s3)
 })
 
 options("mc.cores"=parallel::detectCores())
@@ -19,87 +22,4 @@ bench::bench_time({
 
 
 
-
-
-
-
-
-
-
-
-dfs <- grib_extract("1",
-                    reference_datetime = Sys.Date()-1,
-                    bands = cfs_bands(),
-                    sites = neon_sites() |> sf::st_shift_longitude(),
-                    horizon = cfs_horizon(),
-                    all_bands = cfs_all_bands(),
-                    url_builder = cfs_urls,
-                    cycle = "00")
-
-
-reference_datetime <- Sys.Date()-1
-ens <- 1
-bands = cfs_bands()
-sites = neon_sites() |> sf::st_shift_longitude()
-horizon = cfs_horizon()
-all_bands = cfs_all_bands()
-url_builder = cfs_urls
-cycle = "00"
-
-gdalcubes_cloud_config()
-reference_datetime <- lubridate::as_date(reference_datetime)
-date_time <- reference_datetime + lubridate::hours(horizon)
-
-cfs_urls(ens, reference_datetime, horizon, cycle) |>
-  gdalcubes::stack_cube(datetime_values = date_time,
-                        band_names = all_bands) |>
-  gdalcubes::select_bands(bands) |>
-  gdalcubes::extract_geom(sites)
-
-
-
-reference_datetime <- Sys.Date()-4
-ens <- 3
-cfs_horizon_days <- function(ens=1, reference_datetime = Sys.Date()-2) {
-  ref_datetime <- format(reference_datetime, "%Y%m%d")
-  s3 <- arrow::s3_bucket(glue::glue("noaa-cfs-pds/cfs.{ref_datetime}/00/6hrly_grib_0{ens}/"), anonymous=TRUE)
-  all_gribs <- s3$ls()
-  flxf <- all_gribs[ grepl("flxf\\d{10}.*\\.grb2$", all_gribs) ]
-  horizons <- gsub(paste0("flxf(\\d{10})\\.0", ens,
-                          "\\.(\\d{10})\\.grb2"), "\\1", flxf) |>
-    lubridate::as_datetime(format="%Y%m%d%H")
-  diff <- horizons - lubridate::as_datetime(reference_datetime)
-  units(diff) <- "days"
-  max(diff)
-}
-
-b <- reference_datetime + lubridate::hours(cfs_horizon())
-
-length(b) < length(horizons)
-any(b)
-
-## examine
-
-library(tidyverse)
-library(arrow)
-product = "6hrly/cycle=00"
-path = "neon4cast-drivers/noaa/cfs"
-endpoint = "https://sdsc.osn.xsede.org"
-bucket = glue::glue("bio230014-bucket01/{path}/{product}")
-
-s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint, anonymous = TRUE)
-s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
-cfs <- arrow::open_dataset(s3_dir)
-cfs |> head() |> collect()
-
-# use a nearby range of ref-datetimes as extra ensmble members
-cfs |>
-  filter(site_id == "BARR", variable == "TMP",
-         reference_datetime %in% c("2023-03-26", "2023-03-27", "2023-03-28")) |>
-  mutate(ensemble = paste(parameter, reference_datetime, "-")) |>
-  collect() |>
-  group_by(datetime) |> mutate(mean = mean(prediction)) |>
-  ggplot(aes(datetime, prediction, col=ensemble)) + geom_line() +
-  geom_line(aes(datetime, mean), col="darkred") +
-  ggtitle("6hrly temp in Utqiaġvik, Alaska") + scale_color_viridis_d()
 
