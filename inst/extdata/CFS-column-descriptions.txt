@@ -1,4 +1,3 @@
-CONTENTS OF FLX FILE (103 Variables)
 CDUVBsfc	surface Clear Sky UV-B Downward Solar Flux [W/m^2]
 DUVBsfc	surface UV-B Downward Solar Flux [W/m^2]
 CSDLFsfc	surface Clear sky downward long wave flux [W/m^2]

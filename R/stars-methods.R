@@ -72,7 +72,10 @@ stars_extract <- function(ens,
     purrr::list_rbind()
 }
 
-cfs_band_numbers <- function() c(31, 36:40)
+cfs_band_numbers <- function() {
+  meta <- cfs_metadata()
+  meta$band_number
+}
 
 
 gefs_band_numbers <- function(){

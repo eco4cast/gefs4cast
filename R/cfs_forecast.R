@@ -1,38 +1,16 @@
-#band 5: tmp (surface) - not used but is automatically included
-#band 11: longwave (surface) DLWRF
-#band 16: shortwave (surface) DSWRF
-#band 31: rain flux (PRATE) (kg/m^2/s)
-#band 36: UGRD Wind (10 m)
-#band 37:  (missnumbered as 36.2!): VGRD Wind (10 m)
-#band 38: Tmp (2m)
-#band 39: specific humidity (2 m) SPFH
-#band 40: pressure (surface) PRES
-# SNOD Snow Depth
-# SNOWC Snow % Cover
-# PEVPR potential evaporation rate
-# TRANS transpiration rate
-# VEG vegetation type
-# soilW 0-10cm
-# soilW 10-40cm
-# soilW 40-100cm
-# soilW 100-200cm
-# TCDC clm total cloud coover (column)
-# PWAT clm atmos column precipitable water (kg/m^2)
-# TMAX 2m
-# TMIN 2m
-# EVPS surface direct evaporation from bare soil
-# EVCW canopy water evaporation
+
+
+cfs_metadata <- function() {
+  system.file("extdata/cfs-selected-bands.csv",
+              package="gefs4cast") |>
+  readr::read_csv(show_col_types = FALSE)
+}
 
 cfs_bands <- function() {
-  c("TMP_srf" = "x5",
-    "DLWRF" = "x11",
-    "DSWRF" = "x16",
-    "PRATE" = "x31",
-    "UGRD" = "x36",
-    "VGRD" = "x37",
-    "TMP_2m" = "x38",
-    "SPFH" = "x39",
-    "PRES" = "x40")
+  meta <- cfs_metadata()
+  out <- meta$band
+  names(out) <- meta$id
+  out
 }
 
 
