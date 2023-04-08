@@ -16,6 +16,8 @@ noaa_gefs(
 
 \item{cycle}{start hour of reference datetime}
 
+\item{...}{additional arguments, no longer used but allows compatibility}
+
 \item{s3}{s3 bucket or local path}
 }
 \description{
