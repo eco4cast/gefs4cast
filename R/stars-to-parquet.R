@@ -26,7 +26,7 @@ stars_to_parquet <- function(dates,
                     cycle = cycle)
       dfs |>
         purrr::list_rbind() |>
-        dplyr::select(-geometry) |> # cannot write list-cols to arrow
+        dplyr::select(-"geometry") |> # cannot write list-cols to arrow
         arrow::write_dataset(path,
                              partitioning = partitioning)
     },

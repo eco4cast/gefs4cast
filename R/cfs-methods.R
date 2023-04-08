@@ -1,9 +1,72 @@
+#' cfs_to_parquet
+#'
+#' @param dates a vector of reference_datetimes
+#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
+#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
+#' @param bands named vector of bands to extract
+#' @param ensemble list of ensembles
+#' @param sites sf object of sites
+#' @param horizon vector of horizons (in hours, as integer values)
+#' @param all_bands vector of all band names, needed for
+#' `[gdalcubes::stack_cube()]`
+#' @param url_builder function that constructs URLs to access grib files.
+#' must be a function of horizon, ens, reference_datetime, cycle, and any
+#' optional additional arguments.
+#' @param cycle cycle indicating start time when forecast was generated
+#' (i.e. "00", "06", "12", or "18" hours into reference_datetime)
+#' @param family statistical family, e.g. 'ensemble' or 'normal'
+#' @param partitioning partitioning structure used in writing the parquet data
+#' @export
+#' @examples
+#' \donttest{
+#' cfs_to_parquet(Sys.Date() - 2L, path=tempfile(),
+#'                ensemble=1,  horizon = cfs_horizon)
+#' }
+cfs_to_parquet <- function(dates = Sys.Date() - 1L,
+                           path = "cfs_parquet",
+                           ensemble = cfs_ensemble(),
+                           bands = cfs_bands(),
+                           sites = neon_sites() |> sf::st_shift_longitude(),
+                           horizon = cfs_horizon(),
+                           all_bands = cfs_all_bands(),
+                           url_builder = cfs_urls,
+                           cycle = "00",
+                           family = "ensemble",
+                           partitioning = c("reference_datetime",
+                                            "site_id")) {
+
+  assert_gdal_version("3.6.0") # needed for grb2 over vsicurl
+  grib_to_parquet(dates, path, ensemble, bands, sites, horizon,
+                  all_bands, url_builder, cycle, family, partitioning)
+}
 
 
+#' cfs_s3_dir
+#'
+#' @param product target folder, e.g. "6hrly/00" for cycle 00, 6-hrly product
+#' @inheritParams gefs_s3_dir
+#' @export
+cfs_s3_dir <- function(product,
+                       path = "neon4cast-drivers/noaa/cfs/",
+                       endpoint = "https://sdsc.osn.xsede.org",
+                       bucket = paste0("bio230014-bucket01/", path, product)) {
+
+  s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
+                                   access_key = Sys.getenv("OSN_KEY"),
+                                   secret_key = Sys.getenv("OSN_SECRET"))
+  s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
+  s3_dir
+}
+
+#' cfs metadata
+#'
+#' table of data bands accessed from CFS forecasts,
+#' along with discriptions
+#' @export
 cfs_metadata <- function() {
   system.file("extdata/cfs-selected-bands.csv",
               package="gefs4cast") |>
-  readr::read_csv(show_col_types = FALSE)
+    readr::read_csv(show_col_types = FALSE)
 }
 
 cfs_bands <- function() {
@@ -13,50 +76,6 @@ cfs_bands <- function() {
   out
 }
 
-
-
-#' cfs_to_parquet
-#'
-#' @param dates a vector of reference_datetimes
-#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
-#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
-#' @param partitioning partitioning structure used in writing the parquet data
-#' @inheritParams grib_extract
-#' @export
-cfs_to_parquet <- function(dates = Sys.Date() - 1L,
-                            path = "cfs_parquet",
-                            ensemble = cfs_ensemble(),
-                            bands = cfs_bands(),
-                            sites = neon_sites() |> sf::st_shift_longitude(),
-                            horizon = cfs_horizon(),
-                            all_bands = cfs_all_bands(),
-                            url_builder = cfs_urls,
-                            cycle = "00",
-                           family = "ensemble",
-                            partitioning = c("reference_datetime",
-                                             "site_id")) {
-
-  assert_gdal_version("3.6.0") # needed for grb2 over vsicurl
-
-  grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
-                  url_builder, cycle, family, partitioning)
-}
-
-cfs_ensemble <- function() as.character(1:4)
-
-cfs_s3_dir <- function(product,
-                        path = "neon4cast-drivers/noaa/cfs/",
-                        endpoint = "https://sdsc.osn.xsede.org",
-                        bucket = paste0("bio230014-bucket01/", path, product))
-{
-
-  s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
-                                   access_key = Sys.getenv("OSN_KEY"),
-                                   secret_key = Sys.getenv("OSN_SECRET"))
-  s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
-  s3_dir
-}
-
 cfs_url <- function(horizon,
                     ens = 1,
                     reference_datetime=Sys.Date()-2,
@@ -64,7 +83,6 @@ cfs_url <- function(horizon,
                     interval = "6hrly") {
 
    base = "https://noaa-cfs-pds.s3.amazonaws.com"
-
    datetime <- reference_datetime + lubridate::hours(horizon)
    file <-
      glue::glue("flxf",
@@ -81,7 +99,6 @@ cfs_url <- function(horizon,
 }
 
 cfs_horizon <- function(ens = 1, reference_datetime = Sys.Date()-1) {
-
   month_horizon <- 7
   if(as.integer(ens) > 1){
     month_horizon <- 4
@@ -117,6 +134,7 @@ cfs_urls <- function(ens = 1,
   urls
 }
 
+cfs_ensemble <- function() as.character(1:4)
 cfs_all_bands <- function() paste0("x", 1:103)
 
 # extracted from example grb2 file:
@@ -133,18 +151,6 @@ cfs_bbox <- function(){
       ymax=89.7506842),
     crs = wkt)
 }
-
-assert_gdal_version <- function(version = "3.6.0") {
-  gdal_version <- sf:::CPL_gdal_version()
-  if(!compareVersion(gdal_version, version)>=0) {
-    stop(paste("gdal v", version,
-               "is required, but detected gdal v", gdal_version), call. = FALSE)
-  }
-}
-
-
-
-
 
 ## Use AWS to check which files exist
 cfs_horizon_days <- function(ens=1, reference_datetime = Sys.Date()-2) {

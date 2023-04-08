@@ -10,7 +10,7 @@ extract_sites_ <- function(r, sites, variable_dimension = 3) {
 
   # better to match crs ahead of time, but can do on-the-fly
   if (!identical(sf::st_crs(r), sf::st_crs(sites))) {
-    sites <- sf::st_transform(sites, st_crs(r))
+    sites <- sf::st_transform(sites, sf::st_crs(r))
   }
 
   # stars::st_extract

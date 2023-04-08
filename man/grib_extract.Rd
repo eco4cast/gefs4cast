@@ -17,6 +17,10 @@ grib_extract(
 )
 }
 \arguments{
+\item{ens}{ensemble string}
+
+\item{reference_datetime}{date forecast is generated}
+
 \item{bands}{numeric vector of bands to extract, see details}
 
 \item{sites}{sf object of sites to extract}
@@ -25,7 +29,11 @@ grib_extract(
 
 \item{all_bands}{names of all bands in grib file}
 
-\item{url_builder}{helper function to construct remote URLs.
+\item{url_builder}{helper function to construct remote URLs.}
+
+\item{cycle}{start cycle of forecast}
+
+\item{...}{additional arguments for url_builder
 Must be a function of ens, reference_datetime, horizon, cycle, and
 any named arguments passed via ...}
 }

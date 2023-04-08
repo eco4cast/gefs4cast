@@ -31,16 +31,15 @@ Imports:
     dplyr,
     readr,
     purrr,
-    terra,
+    stars,
     arrow,
-    processx,
     glue,
     stringr,
     fs,
     lubridate,
     tibble,
     tidyr,
-    stringi,
     gdalcubes,
-    sf
+    sf,
+    vctrs
 VignetteBuilder: knitr

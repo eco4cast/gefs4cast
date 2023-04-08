@@ -20,6 +20,13 @@ bench::bench_time({
   cfs_stars(Sys.Date()-1,  horizon = cfs_horizon)
 })
 
+## access data
+library(tidyverse)
+devtools::load_all()
+s3 <- cfs_s3_dir("6hrly/00")
 
+cfs_data <- arrow::open_dataset(s3$path("reference_datetime=2021-02-15"))
+df <- cfs_data |> collect()
 
-
+df |> filter(site_id == "ABBY", variable=="TMP_srf") |>
+  ggplot(aes(datetime, prediction, col=parameter)) + geom_line()

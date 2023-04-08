@@ -14,11 +14,11 @@ efi_format_cubeextract(
 \arguments{
 \item{dfs}{list of tables from grib_extract}
 
+\item{reference_datetime}{forecast reference_datetime}
+
 \item{sites}{sites (as sf object)}
 
 \item{bands}{named vector of band numbers, see \code{\link[=gefs_bands]{gefs_bands()}}}
-
-\item{date}{forecast reference_datetime}
 }
 \description{
 reformat results from grib_extract to EFI format
