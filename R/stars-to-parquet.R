@@ -52,6 +52,8 @@ gefs_stars <- function(dates = Sys.Date()-1,
                        partitioning = c("reference_datetime",
                                         "site_id"),
                        ...) {
+
+  assert_gdal_version("3.4.0")
   stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
                    url_builder, family, partitioning)
 }
@@ -62,14 +64,14 @@ cfs_stars <- function(dates = Sys.Date()-1,
                       ensemble = cfs_ensemble(),
                       bands = cfs_band_numbers(),
                       sites = neon_sites() |> sf::st_shift_longitude(),
-                      horizon = cfs_horizon(),
+                      horizon = cfs_horizon,
                       cycle = "00",
                       url_builder = cfs_url,
                       family = "ensemble",
                       partitioning = c("reference_datetime",
                                        "site_id"),
                       ...) {
-  assert_gdal_version()
+  assert_gdal_version("3.6.0")
 
   stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
                    url_builder, family, partitioning)

@@ -6,7 +6,9 @@
 #' @param bands named vector of bands to extract
 #' @param ensemble list of ensembles
 #' @param sites sf object of sites
-#' @param horizon vector of horizons (in hours, as integer values)
+#' @param horizon vector of horizons (in hours, as integer values), or as constructor
+#' function.  CFS requires a dynamic constructor since horizon varies by reference date
+#' and ensemble.
 #' @param all_bands vector of all band names, needed for
 #' `[gdalcubes::stack_cube()]`
 #' @param url_builder function that constructs URLs to access grib files.
@@ -27,7 +29,7 @@ cfs_to_parquet <- function(dates = Sys.Date() - 1L,
                            ensemble = cfs_ensemble(),
                            bands = cfs_bands(),
                            sites = neon_sites() |> sf::st_shift_longitude(),
-                           horizon = cfs_horizon(),
+                           horizon = cfs_horizon,
                            all_bands = cfs_all_bands(),
                            url_builder = cfs_urls,
                            cycle = "00",

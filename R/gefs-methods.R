@@ -19,6 +19,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             partitioning = c("reference_datetime",
                                              "site_id")) {
 
+  assert_gdal_version("3.4.0")
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
   grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
@@ -35,7 +36,11 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 #' @param bucket bucket name
 #' @return s3 bucket object (an arrow S3 SubTreeFileSystem object)
 #' @export
-gefs_s3_dir <- function(product,
+#' @examples
+#' \donttest{
+#' gefs_s3_dir()
+#' }
+gefs_s3_dir <- function(product = "stage1",
                         path = "neon4cast-drivers/noaa/gefs-v12/",
                         endpoint = "https://sdsc.osn.xsede.org",
                         bucket = paste0("bio230014-bucket01/", path, product))
