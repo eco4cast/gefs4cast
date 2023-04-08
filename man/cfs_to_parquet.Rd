@@ -10,7 +10,7 @@ cfs_to_parquet(
   ensemble = cfs_ensemble(),
   bands = cfs_bands(),
   sites = sf::st_shift_longitude(neon_sites()),
-  horizon = cfs_horizon(),
+  horizon = cfs_horizon,
   all_bands = cfs_all_bands(),
   url_builder = cfs_urls,
   cycle = "00",
@@ -29,7 +29,9 @@ cfs_to_parquet(
 
 \item{sites}{sf object of sites}
 
-\item{horizon}{vector of horizons (in hours, as integer values)}
+\item{horizon}{vector of horizons (in hours, as integer values), or as constructor
+function.  CFS requires a dynamic constructor since horizon varies by reference date
+and ensemble.}
 
 \item{all_bands}{vector of all band names, needed for
 \verb{[gdalcubes::stack_cube()]}}

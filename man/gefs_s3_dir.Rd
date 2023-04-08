@@ -5,7 +5,7 @@
 \title{gefs_s3_dir}
 \usage{
 gefs_s3_dir(
-  product,
+  product = "stage1",
   path = "neon4cast-drivers/noaa/gefs-v12/",
   endpoint = "https://sdsc.osn.xsede.org",
   bucket = paste0("bio230014-bucket01/", path, product)
@@ -25,4 +25,9 @@ s3 bucket object (an arrow S3 SubTreeFileSystem object)
 }
 \description{
 Helper function that returns a path to the EFI S3 directory
+}
+\examples{
+\donttest{
+gefs_s3_dir()
+}
 }
