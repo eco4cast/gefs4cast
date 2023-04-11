@@ -1,14 +1,14 @@
-
+library(testthat)
+library(gefs4cast)
 library(gdalcubes)
-gdalcubes_options(parallel=TRUE)
-
+library(arrow)
 # c6in.4xlarge:
 # cirrus: 5 min all 128 cores 2x overload or 2
 
 test_that("gdalcubes-based CFS", {
 
   path <- tempfile()
-  gdalcubes_options(parallel=2*parallel::detectCores())
+  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
   bench::bench_time({
     cfs_to_parquet(Sys.Date()-3, path = path)
   })
@@ -30,7 +30,7 @@ test_that("stars-based CFS", {
 test_that("gdalcubes-based GEFS", {
 
   path <- tempfile()
-  gdalcubes_options(parallel=2*parallel::detectCores())
+  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
   bench::bench_time({
     gefs_to_parquet(Sys.Date()-3, path = path)
   })

@@ -19,11 +19,7 @@
 #' @param family statistical family, e.g. 'ensemble' or 'normal'
 #' @param partitioning partitioning structure used in writing the parquet data
 #' @export
-#' @examples
-#' \donttest{
-#' cfs_to_parquet(Sys.Date() - 2L, path=tempfile(),
-#'                ensemble=1,  horizon = cfs_horizon)
-#' }
+#'
 cfs_to_parquet <- function(dates = Sys.Date() - 1L,
                            path = "cfs_parquet",
                            ensemble = cfs_ensemble(),

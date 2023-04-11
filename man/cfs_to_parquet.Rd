@@ -50,9 +50,3 @@ optional additional arguments.}
 \description{
 cfs_to_parquet
 }
-\examples{
-\donttest{
-cfs_to_parquet(Sys.Date() - 2L, path=tempfile(),
-               ensemble=1,  horizon = cfs_horizon)
-}
-}
