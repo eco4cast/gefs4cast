@@ -69,7 +69,10 @@ gefs_bands <- function() {
             "DLWRF" = "band79")
 }
 
-gefs_all_bands <- function() paste0("band", 1:85)
+gefs_all_bands <- function(zero_horizon=FALSE){
+  if(zero_horizon) return(paste0("band", 1:71))
+  paste0("band", 1:85)
+}
 
 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
