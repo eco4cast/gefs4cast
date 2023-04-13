@@ -59,7 +59,7 @@ cfs_s3_dir <- function(product,
 #' cfs metadata
 #'
 #' table of data bands accessed from CFS forecasts,
-#' along with discriptions
+#' along with descriptions
 #' @export
 cfs_metadata <- function() {
   system.file("extdata/cfs-selected-bands.csv",

@@ -1,5 +1,6 @@
 library(testthat)
-library(gefs4cast)
+
+devtools::load_all()
 library(gdalcubes)
 library(arrow)
 # c6in.4xlarge:

@@ -22,8 +22,53 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   assert_gdal_version("3.4.0")
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
-  grib_to_parquet(dates, path, ensemble, bands, sites, horizon, all_bands,
-                  url_builder, cycle, family, partitioning)
+
+  lapply(dates, function(date) {
+    message(date)
+    tryCatch({
+      ## can increase gdalcubes cores to multiple of total cores instead
+      nonzero_horiz <- parallel::mclapply(ensemble,
+                                grib_extract,
+                                reference_datetime = date,
+                                bands = bands,
+                                sites = sites,
+                                horizon = horizon,
+                                all_bands = all_bands,
+                                url_builder = url_builder,
+                                cycle = cycle,
+                                mc.cores = getOption("mc.cores", 1L)) |>
+        efi_format_cubeextract(reference_datetime = date,
+                               sites = sites,
+                               bands = bands) |>
+        dplyr::mutate(family = family)
+      ## do zero_horiz seperately since it requires different band definitions
+      zero_horiz <-
+        parallel::mclapply(ensemble,
+                           grib_extract,
+                           reference_datetime = date,
+                           bands = gefs_bands(TRUE),
+                           sites = sites,
+                           horizon = "000",
+                           all_bands = gefs_all_bands(TRUE),
+                           url_builder = url_builder,
+                           cycle = cycle,
+                           mc.cores = getOption("mc.cores", 1L)) |>
+        efi_format_cubeextract(reference_datetime = date,
+                               sites = sites,
+                               bands = gefs_bands(TRUE)) |>
+        dplyr::mutate(family = family)
+
+        dplyr::rbind(zero_horiz, nonzero_horiz) |>
+        arrow::write_dataset(path,
+                             partitioning = partitioning)
+
+    },
+    error = function(e) warning(paste("date", date, "failed with:\n", e),
+                                call.=FALSE),
+    finally=NULL)
+    invisible(date)
+  })
+
 }
 
 
@@ -54,19 +99,30 @@ gefs_s3_dir <- function(product = "stage1",
 }
 
 
-
+#' gefs metadata
+#'
+#' table of data bands accessed from GEFS forecasts,
+#' along with descriptions
+#' @export
+gefs_metadata <- function() {
+  system.file("extdata/gefs-selected-bands.csv",
+              package="gefs4cast") |>
+    readr::read_csv(show_col_types = FALSE)
+}
 #' mapping of gefs_bands to variable names
 #'
 #' export
-gefs_bands <- function() {
-  bands = c("PRES"= "band57",
-            "TMP" = "band63",
-            "RH" = "band64",
-            "UGRD" = "band67",
-            "VGRD" = "band68",
-            "APCP" = "band69",
-            "DSWRF" = "band78",
-            "DLWRF" = "band79")
+gefs_bands <- function(zero_horizon=FALSE) {
+  meta <- gefs_metadata()
+
+  if(zero_horizon){
+    meta <- meta[!is.na(meta$horiz0_number), ]
+    meta$Number <- meta$horiz0_number
+  }
+
+  bands <- paste0("band", meta$Number)
+  names(bands) <- meta$Parameter
+  bands
 }
 
 gefs_all_bands <- function(zero_horizon=FALSE){
