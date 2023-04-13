@@ -27,7 +27,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
     message(date)
     tryCatch({
       ## can increase gdalcubes cores to multiple of total cores instead
-      nonzero_horiz <- parallel::mclapply(ensemble,
+      nonzero_horiz <- lapply(ensemble,
                                 grib_extract,
                                 reference_datetime = date,
                                 bands = bands,
@@ -35,15 +35,13 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                                 horizon = horizon,
                                 all_bands = all_bands,
                                 url_builder = url_builder,
-                                cycle = cycle,
-                                mc.cores = getOption("mc.cores", 1L)) |>
+                                cycle = cycle) |>
         efi_format_cubeextract(reference_datetime = date,
                                sites = sites,
                                bands = bands) |>
         dplyr::mutate(family = family)
       ## do zero_horiz seperately since it requires different band definitions
-      zero_horiz <-
-        parallel::mclapply(ensemble,
+      zero_horiz <- lapply(ensemble,
                            grib_extract,
                            reference_datetime = date,
                            bands = gefs_bands(TRUE),
@@ -51,8 +49,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                            horizon = "000",
                            all_bands = gefs_all_bands(TRUE),
                            url_builder = url_builder,
-                           cycle = cycle,
-                           mc.cores = getOption("mc.cores", 1L)) |>
+                           cycle = cycle) |>
         efi_format_cubeextract(reference_datetime = date,
                                sites = sites,
                                bands = gefs_bands(TRUE)) |>
