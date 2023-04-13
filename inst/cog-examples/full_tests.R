@@ -31,7 +31,7 @@ test_that("stars-based CFS", {
 test_that("gdalcubes-based GEFS", {
 
   path <- tempfile()
-  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
+  gdalcubes::gdalcubes_options(parallel=8*parallel::detectCores())
   bench::bench_time({
     gefs_to_parquet(Sys.Date()-3, path = path)
   })
@@ -41,7 +41,7 @@ test_that("gdalcubes-based GEFS", {
 test_that("stars-based GEFS", {
 
   path = tempfile()
-  options("mc.cores"=parallel::detectCores())
+  options("mc.cores"=3*parallel::detectCores())
   bench::bench_time({
     gefs_stars(Sys.Date()-1, path)
   })

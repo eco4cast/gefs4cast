@@ -58,7 +58,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                                bands = gefs_bands(TRUE)) |>
         dplyr::mutate(family = family)
 
-        dplyr::rbind(zero_horiz, nonzero_horiz) |>
+        dplyr::bind_rows(zero_horiz, nonzero_horiz) |>
         arrow::write_dataset(path,
                              partitioning = partitioning)
 
