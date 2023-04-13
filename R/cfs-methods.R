@@ -102,16 +102,19 @@ cfs_horizon <- function(ens = 1, reference_datetime = Sys.Date()-1) {
     month_horizon <- 4
   }
 
+  # note modulus math required!
   reference_datetime <- lubridate::as_date(reference_datetime)
-  m <- lubridate::month(reference_datetime) + month_horizon
-  y <- lubridate::year(reference_datetime)
+  month_remainder <- (lubridate::month(reference_datetime) + month_horizon)
+  m <-  month_remainder %% 12
+  y <- lubridate::year(reference_datetime) + month_remainder %/% 12
   end <- lubridate::as_date(paste(y, m, "01", sep="-"))
   days <- end - reference_datetime
   units(days) <- "days"
   horizon_hours = 24 * as.integer(days)
   interval_hours=6
 
-  as.character(seq(interval_hours, horizon_hours, by = interval_hours))
+  if(horizon_hours <= 0) return(0)
+  as.character(seq(0, horizon_hours, by = interval_hours))
 }
 
 
@@ -133,7 +136,7 @@ cfs_urls <- function(ens = 1,
 }
 
 cfs_ensemble <- function() as.character(1:4)
-cfs_all_bands <- function() paste0("x", 1:103)
+cfs_all_bands <- function() paste0("x", 1:101)
 
 # extracted from example grb2 file:
 # "https://noaa-cfs-pds.s3.amazonaws.com/cfs.20181031/00/6hrly_grib_01/flxf2018103100.01.2018103100.grb2"

@@ -1,14 +1,11 @@
 
 library(gdalcubes)
-gdalcubes_options(parallel=TRUE)
+library(gefs4cast)
 devtools::load_all()
 vis4cast::ignore_sigpipe()
+gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
 
-#options("mc.cores"=parallel::detectCores()) # overload instead
-
-gdalcubes_options(parallel=2*parallel::detectCores())
-
-dates <- seq(as.Date("2021-01-01"), as.Date("2023-04-08"), by=1)
+dates <- seq(as.Date("2018-10-31"), as.Date("2018-11-01"), by=1)
 s3 <- cfs_s3_dir("6hrly/00")
 
 bench::bench_time({
