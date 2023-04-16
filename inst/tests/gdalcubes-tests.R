@@ -19,20 +19,43 @@ out <- cube |>
 
 
 ## GEFS
-reference_datetime <- as.Date("2020-11-30")
+reference_datetime <- as.Date("2020-11-22")
+url_builder = gefs_urls
+ensemble = gefs_ensemble()[[1]]
+family = "ensemble"
+date = reference_datetime
+cycle = "00"
+all_bands <- gefs_all_bands()
+bands = gefs_bands()
+
+
+# full horizon, one ens
+gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
+
+reference_datetime <- as.Date("2020-11-22")
 ens <- gefs_ensemble()[[1]]
-horizon <- c("000", gefs_horizon())
+horizon <-  gefs_horizon()
 date_time <- reference_datetime + lubridate::hours(horizon)
 urls <- gefs_urls(ens, reference_datetime, horizon)
-bands <- gefs_all_bands()
-band_list <- rep(bands, length(urls)-1)
-cube <- gdalcubes::stack_cube(urls,
-                              datetime_values = date_time,
-                              band_names = gefs_all_bands())
+sites <- neon_sites()
 
-url0 <- gefs_urls(ens, reference_datetime, "000")
-cube0 <- gdalcubes::stack_cube(url0,
-                              datetime_values = reference_datetime,
-                              band_names = gefs_all_bands(zero_horizon = TRUE))
+bench::bench_time({
+  cube <-
+    gdalcubes::stack_cube(urls,
+                          datetime_values = date_time,
+                          band_names = gefs_all_bands())  |> # 5sec
+    gdalcubes::select_bands(gefs_bands()) |>
+    gdalcubes::extract_geom(sites)
+}) #one ensemble member, full horizon: 2.5 min on cirrus, 20sec on c6in.32xlarge
 
+bench::bench_time({
+  cube0 <-
+    gdalcubes::stack_cube(gefs_urls(ens, reference_datetime, "000"),
+                          datetime_values = reference_datetime,
+                          band_names = gefs_all_bands(zero_horizon = TRUE))|> # 2.5sec
+    gdalcubes::select_bands(gefs_bands(TRUE)) |>
+    gdalcubes::extract_geom(sites)
 
+})
+
+### GEFS

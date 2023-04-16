@@ -7,9 +7,9 @@ library(arrow)
 # cirrus: 5 min all 128 cores 2x overload or 2
 
 test_that("gdalcubes-based CFS", {
-
+  # 3.25 min on c6in.4xlarge
   path <- tempfile()
-  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
+  gdalcubes::gdalcubes_options(parallel=8*parallel::detectCores())
   bench::bench_time({
     cfs_to_parquet(Sys.Date()-3, path = path)
   })
@@ -19,7 +19,7 @@ test_that("gdalcubes-based CFS", {
 test_that("stars-based CFS", {
 
   path = tempfile()
-  options("mc.cores"=parallel::detectCores())
+  options("mc.cores"=2*parallel::detectCores())
   bench::bench_time({
     cfs_stars(Sys.Date()-1, path)
   })
@@ -27,21 +27,34 @@ test_that("stars-based CFS", {
 
 })
 
+# 14 min: c6in.4xlarge 1 mc.cores, 8x16 gdalcubes cores.
+# c6in.4xlarge 2 mc.cores
+# c6in.32xlarge, 10 mc.cores, 8x128 gdalcubes cores, peaks ~200 GB RAM, 10 GB/s
 
 test_that("gdalcubes-based GEFS", {
-
   path <- tempfile()
-  gdalcubes::gdalcubes_options(parallel=8*parallel::detectCores())
+  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
   bench::bench_time({
-    gefs_to_parquet(Sys.Date()-3, path = path)
+    gefs_to_parquet(Sys.Date()-7, path = path)
   })
   df <- arrow::open_dataset(path)
 })
 
+test_that("gdalcubes-based GEFS geavg", {
+  ## shorter horizon doesn't help
+  path <- tempfile()
+  gdalcubes::gdalcubes_options(parallel=8*parallel::detectCores())
+  bench::bench_time({
+    gefs_to_parquet(Sys.Date()-15, path = path, horizon=gefs_horizon(), ensemble="geavg")
+  })
+  df <- arrow::open_dataset(path)
+})
+
+
 test_that("stars-based GEFS", {
 
   path = tempfile()
-  options("mc.cores"=3*parallel::detectCores())
+  options("mc.cores"=parallel::detectCores())
   bench::bench_time({
     gefs_stars(Sys.Date()-1, path)
   })

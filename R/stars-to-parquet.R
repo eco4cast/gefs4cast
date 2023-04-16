@@ -17,7 +17,7 @@ stars_to_parquet <- function(dates,
     message(date)
     tryCatch({
       dfs <- lapply(ensemble, # loop over ensembles
-                    stars_extract, # parallellized over horizon
+                    stars_extract, # parallel over horizon
                     reference_datetime = date,
                     bands = bands,
                     sites = sites,

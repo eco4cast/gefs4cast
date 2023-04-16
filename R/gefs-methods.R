@@ -28,14 +28,14 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
     tryCatch({
       ## can increase gdalcubes cores to multiple of total cores instead
       nonzero_horiz <- lapply(ensemble,
-                                grib_extract,
-                                reference_datetime = date,
-                                bands = bands,
-                                sites = sites,
-                                horizon = horizon,
-                                all_bands = all_bands,
-                                url_builder = url_builder,
-                                cycle = cycle) |>
+                              grib_extract,
+                              reference_datetime = date,
+                              bands = bands,
+                              sites = sites,
+                              horizon = horizon,
+                              all_bands = all_bands,
+                              url_builder = url_builder,
+                              cycle = cycle) |>
         efi_format_cubeextract(reference_datetime = date,
                                sites = sites,
                                bands = bands) |>
