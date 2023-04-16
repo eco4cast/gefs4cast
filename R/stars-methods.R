@@ -79,7 +79,7 @@ cfs_band_numbers <- function() {
 
 
 gefs_band_numbers <- function(zero_horizon=FALSE){
-  meta <- cfs_metadata()
+  meta <- gefs_metadata()
   if(zero_horizon) {
     meta <- meta[!is.na(meta$horiz0_number), ]
     meta$Number <- meta$horiz0_number
