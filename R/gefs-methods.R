@@ -1,73 +1,44 @@
 
-#' gefs_to_parquet
+#' gefs_bulk_process
 #'
 #' @param dates a vector of reference_datetimes
 #' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
 #' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
 #' @param partitioning partitioning structure used in writing the parquet data
+#' @param shm local directory with at least 100 GB temporary storage space
 #' @inheritParams grib_extract
 #' @export
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
-                            path = "gefs_parquet",
-                            ensemble = gefs_ensemble(),
-                            bands = gefs_bands(),
-                            sites = neon_sites(),
-                            horizon = gefs_horizon(),
-                            all_bands = gefs_all_bands(),
-                            url_builder = gefs_urls,
-                            cycle = "00",
-                            partitioning = c("reference_datetime",
-                                             "site_id")) {
+                              path = "gefs_parquet",
+                              ensemble = gefs_ensemble(),
+                              bands = gefs_bands(),
+                              sites = neon_sites(),
+                              horizon = gefs_horizon(),
+                              all_bands = gefs_all_bands(),
+                              url_builder = gefs_urls,
+                              cycle = "00",
+                              partitioning = c("reference_datetime",
+                                               "site_id")) {
 
   assert_gdal_version("3.4.0")
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
-  lapply(dates, function(date) {
-    message(date)
-    tryCatch({
-      ## can increase gdalcubes cores to multiple of total cores instead
-      nonzero_horiz <- lapply(ensemble,
-                              grib_extract,
-                              reference_datetime = date,
-                              bands = bands,
-                              sites = sites,
-                              horizon = horizon,
-                              all_bands = all_bands,
-                              url_builder = url_builder,
-                              cycle = cycle) |>
-        efi_format_cubeextract(reference_datetime = date,
-                               sites = sites,
-                               bands = bands) |>
-        dplyr::mutate(family = family)
-      ## do zero_horiz seperately since it requires different band definitions
-      zero_horiz <- lapply(ensemble,
-                           grib_extract,
-                           reference_datetime = date,
-                           bands = gefs_bands(TRUE),
-                           sites = sites,
-                           horizon = "000",
-                           all_bands = gefs_all_bands(TRUE),
-                           url_builder = url_builder,
-                           cycle = cycle) |>
-        efi_format_cubeextract(reference_datetime = date,
-                               sites = sites,
-                               bands = gefs_bands(TRUE)) |>
-        dplyr::mutate(family = family)
+  ## omits the 0 band
+  base_path <- file.path(tempdir(), "noaa_gefs")
+  horizon_path <- file.path(base_path, "noaa_gefs", "init=3")
+  init_path <- file.path(base_path, "init=0")
 
-        dplyr::bind_rows(zero_horiz, nonzero_horiz) |>
-        arrow::write_dataset(path,
-                             partitioning = partitioning)
+  ## union the zero and non-zero horizons
+  grib_to_parquet(dates, horizon_path, ensemble,bands, sites, horizon, all_bands,
+                  url_builder, cycle, family, "reference_datetime")
+  grib_to_parquet(dates, init_path, ensemble, gefs_bands(TRUE), sites, "000",
+                  gefs_all_bands(TRUE), url_builder, cycle, family, "reference_datetime")
 
-    },
-    error = function(e) warning(paste("date", date, "failed with:\n", e),
-                                call.=FALSE),
-    finally=NULL)
-    invisible(date)
-  })
+  arrow::open_dataset(base_path) |> dplyr::select(-"init") |>
+    arrow::write_dataset(path, partitioning=partitioning)
 
 }
-
 
 #' gefs_s3_dir
 #'

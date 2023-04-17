@@ -54,8 +54,28 @@ gefs_stars <- function(dates = Sys.Date()-1,
                        ...) {
 
   assert_gdal_version("3.4.0")
-  stars_to_parquet(dates, path, ensemble, bands, sites, horizon, cycle,
-                   url_builder, family, partitioning)
+  lapply(dates, function(date) { # loop over reference_datetimes if needed
+    message(date)
+    tryCatch({
+      dfs <- lapply(ensemble, # loop over ensembles
+                    stars_extract, # parallel over horizon
+                    reference_datetime = date,
+                    bands = bands,
+                    sites = sites,
+                    horizon = horizon,
+                    url_builder = url_builder,
+                    cycle = cycle)
+      dfs |>
+        purrr::list_rbind() |>
+        dplyr::select(-"geometry") |> # cannot write list-cols to arrow
+        arrow::write_dataset(path, partitioning = partitioning)
+    },
+    error = function(e) warning(paste("date", date, "failed with:\n", e),
+                                call.=FALSE),
+    finally=NULL)
+    invisible(date)
+  })
+
 }
 
 

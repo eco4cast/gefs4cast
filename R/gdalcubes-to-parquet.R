@@ -2,16 +2,15 @@
 
 grib_to_parquet <- function(dates = Sys.Date() - 1L,
                             path = "noaa",
-                            ensemble,
-                            bands,
-                            sites,
-                            horizon,
-                            all_bands,
-                            url_builder,
+                            ensemble = gefs_ensemble(),
+                            bands = gefs_bands(),
+                            sites = neon_sites(),
+                            horizon = gefs_horizon(),
+                            all_bands = gefs_all_bands(),
+                            url_builder = gefs_urls,
                             cycle = "00",
                             family = "ensemble",
-                            partitioning = c("reference_datetime",
-                                             "site_id")) {
+                            partitioning = c("reference_datetime", "site_id")) {
   lapply(dates, function(date) {
     message(date)
     tryCatch({
