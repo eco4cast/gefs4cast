@@ -40,6 +40,25 @@ test_that("gdalcubes-based GEFS", {
   df <- arrow::open_dataset(path)
 })
 
+
+test_that("gdalcubes-based GEFS", {
+  path <- tempfile()
+  gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
+  bench::bench_time({
+    grib_to_parquet(Sys.Date()-8,
+                    path,
+                    ensemble = gefs_ensemble(),
+                    bands = gefs_bands(),
+                    sites=neon_sites(),
+                    horizon=gefs_horizon(),
+                    all_bands=gefs_all_bands(),
+                    url_builder = gefs_urls)
+
+    })
+  df <- arrow::open_dataset(path)
+})
+
+
 test_that("gdalcubes-based GEFS geavg", {
   ## shorter horizon doesn't help
   path <- tempfile()

@@ -58,4 +58,12 @@ bench::bench_time({
 
 })
 
-### GEFS
+### GEFS stars test, 1 ensemble member
+options(mc.cores=10)
+bench::bench_time({
+gefs_stars <- stars_extract(ens="gec00",
+              reference_datetime = Sys.Date()-3,
+              horizon = gefs_horizon(),
+              bands = gefs_band_numbers(),
+              url_builder = gefs_urls)
+})
