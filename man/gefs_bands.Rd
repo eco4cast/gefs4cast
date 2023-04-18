@@ -4,7 +4,7 @@
 \alias{gefs_bands}
 \title{mapping of gefs_bands to variable names}
 \usage{
-gefs_bands()
+gefs_bands(zero_horizon = FALSE)
 }
 \description{
 export

@@ -1,43 +1,49 @@
 
-#' gefs_bulk_process
-#'
-#' @param dates a vector of reference_datetimes
-#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
-#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
-#' @param partitioning partitioning structure used in writing the parquet data
-#' @param shm local directory with at least 100 GB temporary storage space
-#' @inheritParams grib_extract
-#' @export
+
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
-                              path = "gefs_parquet",
-                              ensemble = gefs_ensemble(),
-                              bands = gefs_bands(),
-                              sites = neon_sites(),
-                              horizon = gefs_horizon(),
-                              all_bands = gefs_all_bands(),
-                              url_builder = gefs_urls,
-                              cycle = "00",
-                              partitioning = c("reference_datetime",
-                                               "site_id")) {
+                            path = "gefs_parquet",
+                            ensemble = gefs_ensemble(),
+                            bands = gefs_bands(),
+                            sites = neon_sites(),
+                            horizon = gefs_horizon(),
+                            all_bands = gefs_all_bands(),
+                            url_builder = gefs_urls,
+                            cycle = "00",
+                            partitioning = c("reference_datetime",
+                                             "site_id")) {
+
+  # N.B. partitioning on site_id is broken in arrow 11.x
 
   assert_gdal_version("3.4.0")
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
-  ## omits the 0 band
-  base_path <- file.path(tempdir(), "noaa_gefs")
-  horizon_path <- file.path(base_path, "noaa_gefs", "init=3")
-  init_path <- file.path(base_path, "init=0")
+  lapply(reference_datetime, function(date) {
+    message(date)
+    df0 <- cube_extract(date,
+                        ensemble = ensemble,
+                        horizon = "000",
+                        sites = sites,
+                        bands = gefs_bands(TRUE),
+                        all_bands = gefs_all_bands(TRUE),
+                        url_builder = url_builder,
+                        cycle = cycle)
 
-  ## union the zero and non-zero horizons
-  grib_to_parquet(dates, horizon_path, ensemble,bands, sites, horizon, all_bands,
-                  url_builder, cycle, family, "reference_datetime")
-  grib_to_parquet(dates, init_path, ensemble, gefs_bands(TRUE), sites, "000",
-                  gefs_all_bands(TRUE), url_builder, cycle, family, "reference_datetime")
+    df1 <- cube_extract(date,
+                        ensemble = ensemble,
+                        horizon = horizon,
+                        sites = sites,
+                        bands = bands,
+                        all_bands = all_bands,
+                        url_builder = url_builder,
+                        cycle = cycle)
 
-  arrow::open_dataset(base_path) |> dplyr::select(-"init") |>
-    arrow::write_dataset(path, partitioning=partitioning)
+    dplyr::bind_rows(df1, df0) |>
+      dplyr::mutate(family = family) |>
+      arrow::write_dataset(path, partitioning=partitioning)
+    })
 
+  invisible(reference_datetime)
 }
 
 #' gefs_s3_dir

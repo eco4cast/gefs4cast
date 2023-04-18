@@ -1,7 +1,12 @@
 
 library(gdalcubes)
 devtools::load_all()
-gdalcubes::gdalcubes_options(parallel=8*parallel::detectCores())
+gdalcubes::gdalcubes_options(parallel=3*parallel::detectCores())
+
+bench::bench_time({
+  gefs_to_parquet(Sys.Date()-11)
+})
+
 
 # c6in.4xlarge: ~ 14 - 24 sec, 4 cores
 # cirrus: 47 sec
