@@ -18,9 +18,9 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
-  lapply(reference_datetime, function(date) {
-    message(date)
-    df0 <- cube_extract(date,
+  lapply(dates, function(reference_datetime) {
+    message(reference_datetime)
+    df0 <- cube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = "000",
                         sites = sites,
@@ -29,7 +29,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                         url_builder = url_builder,
                         cycle = cycle)
 
-    df1 <- cube_extract(date,
+    df1 <- cube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = horizon,
                         sites = sites,
@@ -43,7 +43,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       arrow::write_dataset(path, partitioning=partitioning)
     })
 
-  invisible(reference_datetime)
+  invisible(dates)
 }
 
 #' gefs_s3_dir
