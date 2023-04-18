@@ -3,7 +3,7 @@ library(gdalcubes)
 library(gefs4cast)
 devtools::load_all()
 vis4cast::ignore_sigpipe()
-gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
+gdalcubes::gdalcubes_options(parallel=3*parallel::detectCores())
 
 dates <- seq(as.Date("2023-01-01"), Sys.Date(), by=1)
 s3 <- gefs_s3_dir("stage1")

@@ -6,6 +6,11 @@
 \usage{
 gefs_bands(zero_horizon = FALSE)
 }
+\arguments{
+\item{zero_horizon}{GEFS zero-horizon data uses different band numbering,
+so this must be set to TRUE if zero-horizon data is desired.
+export}
+}
 \description{
-export
+mapping of gefs_bands to variable names
 }

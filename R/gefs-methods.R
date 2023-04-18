@@ -1,5 +1,25 @@
 
-
+#' gefs_to_parquet
+#'
+#' @param dates a vector of reference_datetimes
+#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
+#' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
+#' @param bands named vector of bands to extract
+#' @param ensemble list of ensembles
+#' @param sites sf object of sites
+#' @param horizon vector of horizons (in hours, as integer values), or as constructor
+#' function.  CFS requires a dynamic constructor since horizon varies by reference date
+#' and ensemble.
+#' @param all_bands vector of all band names, needed for
+#' `[gdalcubes::stack_cube()]`
+#' @param url_builder function that constructs URLs to access grib files.
+#' must be a function of horizon, ens, reference_datetime, cycle, and any
+#' optional additional arguments.
+#' @param cycle cycle indicating start time when forecast was generated
+#' (i.e. "00", "06", "12", or "18" hours into reference_datetime)
+#' @param partitioning partitioning structure used in writing the parquet data
+#' @export
+#'
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             path = "gefs_parquet",
                             ensemble = gefs_ensemble(),
@@ -20,6 +40,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)
+    tryCatch({
     df0 <- cube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = "000",
@@ -41,6 +62,10 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
     dplyr::bind_rows(df1, df0) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
+    },
+    error = function(e) warning(paste("date", date, "failed with:\n", e),
+                                call.=FALSE),
+    finally=NULL)
     })
 
   invisible(dates)
@@ -84,7 +109,8 @@ gefs_metadata <- function() {
     readr::read_csv(show_col_types = FALSE)
 }
 #' mapping of gefs_bands to variable names
-#'
+#' @param zero_horizon GEFS zero-horizon data uses different band numbering,
+#' so this must be set to TRUE if zero-horizon data is desired.
 #' export
 gefs_bands <- function(zero_horizon=FALSE) {
   meta <- gefs_metadata()
