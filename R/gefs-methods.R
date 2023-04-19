@@ -112,22 +112,43 @@ gefs_metadata <- function() {
 #' @param zero_horizon GEFS zero-horizon data uses different band numbering,
 #' so this must be set to TRUE if zero-horizon data is desired.
 #' export
-gefs_bands <- function(zero_horizon=FALSE) {
+gefs_bands <- function(zero_horizon = FALSE,
+                       gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
   meta <- gefs_metadata()
 
-  if(zero_horizon){
+  if(zero_horizon && gefs_version == "v12"){
     meta <- meta[!is.na(meta$horiz0_number), ]
-    meta$Number <- meta$horiz0_number
+    bands <- paste0("band", meta$horiz0_number)
+    names(bands) <- meta$Parameter
+  } else if (!zero_horizon && gefs_version == "v12" ) {
+    bands <- paste0("band", meta$Number)
+    names(bands) <- meta$Parameter
+  } else if (!zero_horizon && gefs_version == "v11" ) {
+    meta <- meta[!is.na(meta$v11_number), ]
+    bands <- paste0("band", meta$v11_number)
+    names(bands) <- meta$Parameter
+  } else if (zero_horizon && gefs_version == "v11" ) {
+    meta <- meta[!is.na(meta$v11_horiz0), ]
+    bands <- paste0("band", meta$v11_horiz0)
+    names(bands) <- meta$Parameter
   }
-
-  bands <- paste0("band", meta$Number)
-  names(bands) <- meta$Parameter
   bands
 }
 
-gefs_all_bands <- function(zero_horizon=FALSE){
-  if(zero_horizon) return(paste0("band", 1:71))
-  paste0("band", 1:85)
+gefs_all_bands <- function(zero_horizon = FALSE,
+                           gefs_version = Sys.getenv("GEFS_VERSION", "v12")){
+
+
+  if(zero_horizon){
+    out <- switch(gefs_version,
+                  "v12" = paste0("band", 1:71),
+                  "v11" = paste0("band", 1:69))
+  } else {
+    out <- switch(gefs_version,
+                  "v12" = paste0("band", 1:85),
+                  "v11" = paste0("band", 1:83))
+  }
+out
 }
 
 
@@ -138,19 +159,35 @@ gefs_urls <- function(ens,
                       cycle = "00",
                       series = "atmos",
                       resolution = "0p50",
+                      gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
                       base = "https://noaa-gefs-pds.s3.amazonaws.com") {
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_time <- reference_datetime + lubridate::hours(horizon)
-  gribs <- paste0(
-    base,
-    "/gefs.",format(reference_datetime, "%Y%m%d"),
-    "/", cycle,
-    "/",series,
-    "/pgrb2ap5/",
-    ens,
-    ".t", cycle, "z.",
-    "pgrb2a.0p50.",
-    "f", horizon)
+
+
+
+  gribs <- switch(gefs_version,
+                  "v12" = paste0(
+                                base,
+                                "/gefs.",format(reference_datetime, "%Y%m%d"),
+                                "/", cycle,
+                                "/",series,
+                                "/pgrb2ap5/",
+                                ens,
+                                ".t", cycle, "z.",
+                                "pgrb2a.0p50.",
+                                "f", horizon),
+# https://noaa-gefs-pds.s3.amazonaws.com/gefs.20170101/00/gec00.t00z.pgrb2af006
+                  "v11" = paste0(
+                    base,
+                    "/gefs.",format(reference_datetime, "%Y%m%d"),
+                    "/", cycle,
+                    "/",
+                    ens,
+                    ".t", cycle, "z.",
+                    "pgrb2a",
+                    "f", horizon)
+  )
   paste0("/vsicurl/", gribs)
 }
 
@@ -159,9 +196,13 @@ gefs_urls <- function(ens,
 #' @param ... additional parameters (not used, for cross-compatibility only)
 #' @return list of horizon values (for cycle 00, gepNN forecasts)
 #' @export
-gefs_horizon <- function(...) {
-  c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
-    stringr::str_pad(seq(246,840,by=6), 3, pad="0"))
+gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
+                         ...) {
+  switch(gefs_version,
+         "v12" = c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
+                   stringr::str_pad(seq(246,840,by=6), 3, pad="0")),
+         "v11" = stringr::str_pad(seq(6,384, by=3), 3, pad="0")
+  )
 }
 
 
@@ -170,8 +211,11 @@ gefs_horizon <- function(...) {
 #' If only mean and spread are needed, manually pass
 #' `c(mean = "geavg", spr = "gespr")`
 #' @export
-gefs_ensemble <- function() {
-  c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0")))
+gefs_ensemble <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
+  switch(gefs_version,
+         "v12" = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
+         "v11" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0")))
+  )
 }
 
 #' gefs bounding box
