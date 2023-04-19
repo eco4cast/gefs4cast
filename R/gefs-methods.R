@@ -201,7 +201,7 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
   switch(gefs_version,
          "v12" = c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
                    stringr::str_pad(seq(246,840,by=6), 3, pad="0")),
-         "v11" = stringr::str_pad(seq(6,384, by=3), 3, pad="0")
+         "v11" = stringr::str_pad(seq(6,384, by=6), 3, pad="0")
   )
 }
 
