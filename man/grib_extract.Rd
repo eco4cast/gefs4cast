@@ -6,43 +6,36 @@
 \usage{
 grib_extract(
   ens,
-  date = Sys.Date(),
-  sites = neon_sites(),
+  reference_datetime = Sys.Date(),
   bands = gefs_bands(),
+  sites = neon_sites(),
   horizon = gefs_horizon(),
+  all_bands = gefs_all_bands(),
+  url_builder = gefs_urls,
   cycle = "00",
   ...
 )
 }
 \arguments{
-\item{ens}{ensemble the ensemble member to process, e.g. 'gepavg'
-can also be geavg (mean), gespr (esemble spread),
-gec00 (control) or gep01-gep30 (perturbed)}
+\item{ens}{ensemble string}
 
-\item{date}{start date}
-
-\item{sites}{sf object of sites to extract}
+\item{reference_datetime}{date forecast is generated}
 
 \item{bands}{numeric vector of bands to extract, see details}
 
-\item{horizon}{list of horizon values, in hours (see \code{\link[=gefs_horizon]{gefs_horizon()}})}
+\item{sites}{sf object of sites to extract}
 
-\item{cycle}{forecast cycle, GEFS forecasts are produced four times a day,
-at 00 (for 35 day horizon) and at 06 ,12, 18 hrs (at 16 day horizon)
-Note that the control member, gec00, also has only a 16 day horizon}
+\item{horizon}{vector of horizons to extract (in hours)}
 
-\item{...}{
-  Arguments passed on to \code{\link[=gefs_view]{gefs_view}}
-  \describe{
-    \item{\code{t0}}{start time (Date or datetime object)}
-    \item{\code{t1}}{end time. 35 days after start by default.}
-    \item{\code{box}}{bounding box giving (xmin, ymin, xmax, ymax) numeric vector
-(or an sf_bbox object)}
-    \item{\code{dx}}{resolution, x-coordinate}
-    \item{\code{dy}}{resolution, y-coordinate}
-    \item{\code{dt}}{resolution, time coordinate, ISO8601 temporal-duration notation}
-    \item{\code{crs}}{Coordinate reference system (string)}
-  }}
+\item{all_bands}{names of all bands in grib file}
+
+\item{url_builder}{helper function to construct remote URLs.}
+
+\item{cycle}{start cycle of forecast}
+
+\item{...}{additional arguments for url_builder
+Must be a function of ens, reference_datetime, horizon, cycle, and
+any named arguments passed via ...}
 }
 \value{
 gdalcubes::image_collection()
@@ -54,8 +47,5 @@ grib_extract
 See \url{https://www.nco.ncep.noaa.gov/pmb/products/gens/} for
 details on GEFS data, including horizon, cycle, and band information.
 This function is a simple wrapper around
-\code{\link[gdalcubes:extract_geom]{gdalcubes::extract_geom()}}.  Users can instead construct their own
-gdalcubes image_collection with \code{\link[=gefs_grib_collection]{gefs_grib_collection()}} and cube view
-(e.g. with \code{\link[=gefs_view]{gefs_view()}}), and then use \code{\link[gdalcubes:raster_cube]{gdalcubes::raster_cube()}} in
-pipe-chain operations with any other gdalcubes functionality.
+\code{\link[gdalcubes:extract_geom]{gdalcubes::extract_geom()}}. .
 }

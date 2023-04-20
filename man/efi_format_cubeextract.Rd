@@ -4,12 +4,17 @@
 \alias{efi_format_cubeextract}
 \title{efi_format_cubeextract}
 \usage{
-efi_format_cubeextract(dfs, date, sites = neon_sites(), bands = gefs_bands())
+efi_format_cubeextract(
+  dfs,
+  reference_datetime,
+  sites = neon_sites(),
+  bands = gefs_bands()
+)
 }
 \arguments{
 \item{dfs}{list of tables from grib_extract}
 
-\item{date}{forecast reference_datetime}
+\item{reference_datetime}{forecast reference_datetime}
 
 \item{sites}{sites (as sf object)}
 
