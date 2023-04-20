@@ -111,6 +111,11 @@ gefs_metadata <- function() {
 #' mapping of gefs_bands to variable names
 #' @param zero_horizon GEFS zero-horizon data uses different band numbering,
 #' so this must be set to TRUE if zero-horizon data is desired.
+#' @param gefs_version GEFS version: v11 covers reference_datetimes from
+#' Jan 1, 2017 to Sept 24, 2020. v12 covers all dates following that.
+#' (earlier versions are not available on AWS).
+#' Note that gefs v11 has only 20 ensemble members, 16 day horizons, and
+#' all at 6 hour intervals.  gefs v11 also has fewer bands.
 #' export
 gefs_bands <- function(zero_horizon = FALSE,
                        gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
@@ -153,7 +158,17 @@ out
 
 
 # https://www.nco.ncep.noaa.gov/pmb/products/gens/
-gefs_urls <- function(ens,
+#' gefs_urls
+#'
+#' @inheritParams gefs_to_parquet
+#' @inheritParams gefs_bands
+#' @param reference_datetime date forecast is produced
+#' @param ens ensemble member for which URLs should be generated
+#' @param series data series (used only by gefs_v12)
+#' @param resolution grid resolution, used only by gefs_v12
+#' @param base NOAA GEFS AWS Bucket
+#' @export
+gefs_urls <- function(ens = "geavg",
                       reference_datetime = Sys.Date(),
                       horizon = gefs_horizon(),
                       cycle = "00",
@@ -193,6 +208,7 @@ gefs_urls <- function(ens,
 
 
 #' gefs_horizon
+#' @inheritParams gefs_bands
 #' @param ... additional parameters (not used, for cross-compatibility only)
 #' @return list of horizon values (for cycle 00, gepNN forecasts)
 #' @export
@@ -207,6 +223,7 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
 
 
 #' gefs ensemble list
+#' @inheritParams gefs_bands
 #' @return Generates the strings for the 30 perturbed ensembles and control
 #' If only mean and spread are needed, manually pass
 #' `c(mean = "geavg", spr = "gespr")`
