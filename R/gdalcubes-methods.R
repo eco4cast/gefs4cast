@@ -1,3 +1,7 @@
+## Replace with megacube_extract
+## May need efi-format generalized appropriately
+## Then can deprecate all methods here.
+
 #' cube_extract
 #'
 #' @param reference_datetime date forecast is generated

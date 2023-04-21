@@ -39,10 +39,10 @@ and ensemble.  000 horizon is added automatically}
 must be a function of horizon, ens, reference_datetime, cycle, and any
 optional additional arguments.}
 
-\item{partitioning}{partitioning structure used in writing the parquet data}
-
-\item{cycle}{cycle indicating start time when forecast was generated
+\item{cycles}{list of cycle indicating start time when forecast was generated
 (i.e. "00", "06", "12", or "18" hours into reference_datetime)}
+
+\item{partitioning}{partitioning structure used in writing the parquet data}
 }
 \description{
 gefs_pseudo_measures

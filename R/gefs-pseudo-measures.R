@@ -14,7 +14,7 @@
 #' @param url_builder function that constructs URLs to access grib files.
 #' must be a function of horizon, ens, reference_datetime, cycle, and any
 #' optional additional arguments.
-#' @param cycle cycle indicating start time when forecast was generated
+#' @param cycles list of cycle indicating start time when forecast was generated
 #' (i.e. "00", "06", "12", or "18" hours into reference_datetime)
 #' @param partitioning partitioning structure used in writing the parquet data
 #' @export
@@ -92,6 +92,8 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
   max_open_files <- as.integer(system("ulimit -n", intern=TRUE))
   stopifnot(nrow(gribs) < max_open_files)
 
+  time <- cycle <- reference_datetime <- NULL # DUMMY
+
   df <-
     gdalcubes::stack_cube(gribs$url,
                           datetime_values = gribs$time,
@@ -113,15 +115,4 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
 
 }
 
-
-chunk_dates <- function(dates = seq(as.Date("2020-09-24"), Sys.Date()-1, by=1),
-                        by = "month") {
-
-  df <- tibble::tibble(date = dates) |>
-    dplyr::mutate(year = lubridate::year(date),
-                  month = lubridate::month(date),
-                  day = lubridate::day(date))
-
-  map()
-}
 
