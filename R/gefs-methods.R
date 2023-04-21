@@ -63,7 +63,8 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       dplyr::mutate(reference_datetime =
                       lubridate::as_date(reference_datetime),
                     horizon =
-                      datetime - lubridate::as_datetime(reference_datetime)) |>
+                      lubridate::as_datetime(datetime) -
+                      lubridate::as_datetime(reference_datetime)) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
     },
