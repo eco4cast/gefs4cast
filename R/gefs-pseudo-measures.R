@@ -8,7 +8,7 @@
 #' @param sites sf object of sites
 #' @param horizon vector of horizons (in hours, as integer values), or as constructor
 #' function.  CFS requires a dynamic constructor since horizon varies by reference date
-#' and ensemble.
+#' and ensemble.  000 horizon is added automatically
 #' @param all_bands vector of all band names, needed for
 #' `[gdalcubes::stack_cube()]`
 #' @param url_builder function that constructs URLs to access grib files.
@@ -19,8 +19,8 @@
 #' @param partitioning partitioning structure used in writing the parquet data
 #' @export
 #'
-gefs_psuedo_measures <- function(dates = Sys.Date() - 1L,
-                                 path = "gefs_parquet",
+gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
+                                 path = "gefs_pseudo",
                                  ensemble = gefs_ensemble(),
                                  bands = gefs_bands(),
                                  sites = neon_sites(),
