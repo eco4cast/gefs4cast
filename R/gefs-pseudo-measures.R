@@ -83,7 +83,7 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
                        reference_datetime = dates,
                        horizon = horizon) |>
     dplyr::mutate(url = url_builder(ensemble, reference_datetime,
-                                    "000", cycle=cycle),
+                                    horizon, cycle=cycle),
                   time = as.Date(Sys.Date() + dplyr::row_number()))
 
   ## don't make cube too big to fit in memory or try more urls than `ulimit -n`
