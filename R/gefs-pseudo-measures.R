@@ -102,7 +102,7 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
   df |>
     dplyr::rename({bands}) |>
     dplyr::left_join(dplyr::mutate(gribs, time=as.character(time)), by="time") |>
-    dplyr::select(-"url") |>
+    dplyr::select(-"url") |> dplyr::select(-"time") |>
     dplyr::mutate(datetime = reference_datetime + lubridate::hours(cycle)) |>
     dplyr::inner_join(sites_df, by = "FID") |>
     dplyr::select(-"FID") |>
