@@ -41,7 +41,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)
     tryCatch({
-    df0 <- cube_extract(reference_datetime,
+    df0 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = "000",
                         sites = sites,
@@ -50,7 +50,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                         url_builder = url_builder,
                         cycle = cycle)
 
-    df1 <- cube_extract(reference_datetime,
+    df1 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = horizon,
                         sites = sites,
@@ -59,7 +59,11 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                         url_builder = url_builder,
                         cycle = cycle)
 
-    dplyr::bind_rows(df1, df0) |>
+    dplyr::bind_rows(df1, df0)  |>
+      dplyr::mutate(reference_datetime =
+                      lubridate::as_date(reference_datetime),
+                    horizon =
+                      datetime - lubridate::as_datetime(reference_datetime)) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
     },
