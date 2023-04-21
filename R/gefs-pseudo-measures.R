@@ -36,30 +36,31 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
-  ## arguably, the zero-horiz cycle 00 is only needed for the pseudo-measure series
-  df0 <- megacube_extract(dates,
-                          ensemble = ensemble,
-                          horizon = "000",
-                          sites = sites,
-                          bands = gefs_bands(TRUE),
-                          all_bands = gefs_all_bands(TRUE),
-                          url_builder = url_builder,
-                          cycles = cycles)
-  df1 <- megacube_extract(dates,
-                          ensemble = ensemble,
-                          horizon = horizon,
-                          sites = sites,
-                          bands = gefs_bands(),
-                          all_bands = gefs_all_bands(),
-                          url_builder = url_builder,
-                          cycles = cycles)
+  dates_groups <- split(dates, ceiling(seq_along(dates)/30))
+  lapply(dates_groups, function(dates) {
+    df0 <- megacube_extract(dates,
+                            ensemble = ensemble,
+                            horizon = "000",
+                            sites = sites,
+                            bands = gefs_bands(TRUE),
+                            all_bands = gefs_all_bands(TRUE),
+                            url_builder = url_builder,
+                            cycles = cycles)
+    df1 <- megacube_extract(dates,
+                            ensemble = ensemble,
+                            horizon = horizon,
+                            sites = sites,
+                            bands = gefs_bands(),
+                            all_bands = gefs_all_bands(),
+                            url_builder = url_builder,
+                            cycles = cycles)
 
-  dplyr::bind_rows(df1, df0) |>
-    dplyr::mutate(family = family) |>
-    arrow::write_dataset(path, partitioning=partitioning,
-                         max_partitions = 1024 * 32)
+    dplyr::bind_rows(df1, df0) |>
+      dplyr::mutate(family = family) |>
+      arrow::write_dataset(path, partitioning=partitioning,
+                           max_partitions = 1024 * 32)
 
-
+  })
   invisible(dates)
 }
 
@@ -111,3 +112,16 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
     dplyr::ungroup()
 
 }
+
+
+chunk_dates <- function(dates = seq(as.Date("2020-09-24"), Sys.Date()-1, by=1),
+                        by = "month") {
+
+  df <- tibble::tibble(date = dates) |>
+    dplyr::mutate(year = lubridate::year(date),
+                  month = lubridate::month(date),
+                  day = lubridate::day(date))
+
+  map()
+}
+

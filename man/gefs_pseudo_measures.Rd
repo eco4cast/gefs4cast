@@ -14,7 +14,7 @@ gefs_pseudo_measures(
   all_bands = gefs_all_bands(),
   url_builder = gefs_urls,
   cycles = c("00", "06", "12", "18"),
-  partitioning = c("reference_datetime", "site_id")
+  partitioning = c("reference_datetime")
 )
 }
 \arguments{
@@ -30,7 +30,7 @@ gefs_pseudo_measures(
 
 \item{horizon}{vector of horizons (in hours, as integer values), or as constructor
 function.  CFS requires a dynamic constructor since horizon varies by reference date
-and ensemble.}
+and ensemble.  000 horizon is added automatically}
 
 \item{all_bands}{vector of all band names, needed for
 \verb{[gdalcubes::stack_cube()]}}
