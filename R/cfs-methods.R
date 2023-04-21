@@ -1,7 +1,7 @@
 #' cfs_to_parquet
 #'
 #' @param dates a vector of reference_datetimes
-#' @param ensemble vector of ensemble values (e.g. 'gep01', 'gep02', ...)
+#' @param ensemble vector of ensemble values (e.g. '01', '02', '03', '04')
 #' @param path path to local directory or S3 bucket (see [arrow::write_dataset()])
 #' @param bands named vector of bands to extract
 #' @param ensemble list of ensembles
@@ -59,7 +59,7 @@ cfs_s3_dir <- function(product,
 #' cfs metadata
 #'
 #' table of data bands accessed from CFS forecasts,
-#' along with discriptions
+#' along with descriptions
 #' @export
 cfs_metadata <- function() {
   system.file("extdata/cfs-selected-bands.csv",

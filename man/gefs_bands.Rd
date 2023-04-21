@@ -4,8 +4,22 @@
 \alias{gefs_bands}
 \title{mapping of gefs_bands to variable names}
 \usage{
-gefs_bands()
+gefs_bands(
+  zero_horizon = FALSE,
+  gefs_version = Sys.getenv("GEFS_VERSION", "v12")
+)
+}
+\arguments{
+\item{zero_horizon}{GEFS zero-horizon data uses different band numbering,
+so this must be set to TRUE if zero-horizon data is desired.}
+
+\item{gefs_version}{GEFS version: v11 covers reference_datetimes from
+Jan 1, 2017 to Sept 24, 2020. v12 covers all dates following that.
+(earlier versions are not available on AWS).
+Note that gefs v11 has only 20 ensemble members, 16 day horizons, and
+all at 6 hour intervals.  gefs v11 also has fewer bands.
+export}
 }
 \description{
-export
+mapping of gefs_bands to variable names
 }

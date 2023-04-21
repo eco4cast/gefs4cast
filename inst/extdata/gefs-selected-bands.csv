@@ -1,0 +1,26 @@
+Number,Level/Layer,Parameter,Forecast Valid,Description,horiz0_number,v11_number,v11_horiz0
+57,surface,PRES,3 hour fcst,Pressure [Pa] ENS=low-res ctl,57,56,56
+58,0-0.1 m below ground,TSOIL,3 hour fcst,Soil Temperature [K] ENS=low-res ctl,59,57,58
+59,0-0.1 m below ground,SOILW,3 hour fcst,Volumetric Soil Moisture Content [Fraction] ENS=low-res ctl,60,58,59
+60,surface,WEASD,3 hour fcst,Water Equivalent of Accumulated Snow Depth [kg/m^2] ENS=low-res ctl,61,59,60
+61,surface,SNOD,3 hour fcst,Snow Depth [m] ENS=low-res ctl,62,60,61
+62,surface,ICETK,3 hour fcst,Ice Thickness [m] ENS=low-res ctl,63,NA,NA
+63,2 m above ground,TMP,3 hour fcst,Temperature [K] ENS=low-res ctl,64,61,62
+64,2 m above ground,RH,3 hour fcst,Relative Humidity [%] ENS=low-res ctl,65,62,63
+65,2 m above ground,TMAX,0-3 hour max,Maximum Temperature [K] ENS=low-res ctl,NA,63,NA
+66,2 m above ground,TMIN,0-3 hour min,Minimum Temperature [K] ENS=low-res ctl,NA,64,NA
+67,10 m above ground,UGRD,3 hour fcst,U-Component of Wind [m/s] ENS=low-res ctl,66,65,64
+68,10 m above ground,VGRD,3 hour fcst,V-Component of Wind [m/s] ENS=low-res ctl,67,66,65
+69,surface,APCP,0-3 (or 0-6) hour acc,Total Precipitation [kg/m^2] ENS=low-res ctl,NA,67,NA
+70,surface,CSNOW,0-3 hour ave,Categorical Snow [-] ENS=low-res ctl,NA,68,NA
+71,surface,CICEP,0-3 hour ave,Categorical Ice Pellets [-] ENS=low-res ctl,NA,69,NA
+72,surface,CFRZR,0-3 hour ave,Categorical Freezing Rain [-] ENS=low-res ctl,NA,70,NA
+73,surface,CRAIN,0-3 hour ave,Categorical Rain [-] ENS=low-res ctl,NA,71,NA
+74,surface,LHTFL,0-3 hour ave,Latent Heat Net Flux [W/m^2] ENS=low-res ctl,NA,72,NA
+75,surface,SHTFL,0-3 hour ave,Sensible Heat Net Flux [W/m^2] ENS=low-res ctl,NA,73,NA
+76,entire atmosphere (considered as a single layer),PWAT,3 hour fcst,Precipitable Water [kg/m^2] ENS=low-res ctl,68,74,66
+77,entire atmosphere,TCDC,0-3 hour ave,Total Cloud Cover [%] ENS=low-res ctl,NA,75,NA
+78,surface,DSWRF,0-3 hour ave,Downward Short-Wave Radiation Flux [W/m^2] ENS=low-res ctl,NA,76,NA
+79,surface,DLWRF,0-3 hour ave,Downward Long-Wave Rad. Flux [W/m^2] ENS=low-res ctl,NA,77,NA
+80,surface,USWRF,0-3 hour ave,Upward Short-Wave Radiation Flux [W/m^2] ENS=low-res ctl,NA,78,NA
+81,surface,ULWRF,0-3 hour ave,Upward Long-Wave Rad. Flux [W/m^2] ENS=low-res ctl,NA,79,NA

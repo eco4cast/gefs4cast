@@ -8,5 +8,5 @@ cfs_metadata()
 }
 \description{
 table of data bands accessed from CFS forecasts,
-along with discriptions
+along with descriptions
 }

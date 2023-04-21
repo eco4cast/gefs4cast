@@ -1,15 +1,22 @@
 
 library(gdalcubes)
-gdalcubes_options(parallel=TRUE)
 devtools::load_all()
+gdalcubes::gdalcubes_options(parallel=3*parallel::detectCores())
+
+bench::bench_time({
+  gefs_to_parquet(Sys.Date()-11)
+})
+
 
 # c6in.4xlarge: ~ 14 - 24 sec, 4 cores
 # cirrus: 47 sec
-options("mc.cores"=4L)
+options("mc.cores"=1L)
+s3 = gefs_s3_dir("stage1")
+sites = neon_sites()
 bench::bench_time({
-  gefs_to_parquet(Sys.Date()-31,
-                  ensemble = c(mean = "geavg", spr = "gespr"),
-                  sites = neon_sites())
+  gefs_to_parquet(Sys.Date()-11,
+                  sites = sites,
+                  path=s3)
 })
 
 

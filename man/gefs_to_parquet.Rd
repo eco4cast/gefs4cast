@@ -22,19 +22,25 @@ gefs_to_parquet(
 
 \item{path}{path to local directory or S3 bucket (see \code{\link[arrow:write_dataset]{arrow::write_dataset()}})}
 
-\item{ensemble}{vector of ensemble values (e.g. 'gep01', 'gep02', ...)}
+\item{ensemble}{list of ensembles}
 
-\item{bands}{numeric vector of bands to extract, see details}
+\item{bands}{named vector of bands to extract}
 
-\item{sites}{sf object of sites to extract}
+\item{sites}{sf object of sites}
 
-\item{horizon}{vector of horizons to extract (in hours)}
+\item{horizon}{vector of horizons (in hours, as integer values), or as constructor
+function.  CFS requires a dynamic constructor since horizon varies by reference date
+and ensemble.}
 
-\item{all_bands}{names of all bands in grib file}
+\item{all_bands}{vector of all band names, needed for
+\verb{[gdalcubes::stack_cube()]}}
 
-\item{url_builder}{helper function to construct remote URLs.}
+\item{url_builder}{function that constructs URLs to access grib files.
+must be a function of horizon, ens, reference_datetime, cycle, and any
+optional additional arguments.}
 
-\item{cycle}{start cycle of forecast}
+\item{cycle}{cycle indicating start time when forecast was generated
+(i.e. "00", "06", "12", or "18" hours into reference_datetime)}
 
 \item{partitioning}{partitioning structure used in writing the parquet data}
 }

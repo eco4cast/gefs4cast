@@ -4,7 +4,15 @@
 \alias{gefs_ensemble}
 \title{gefs ensemble list}
 \usage{
-gefs_ensemble()
+gefs_ensemble(gefs_version = Sys.getenv("GEFS_VERSION", "v12"))
+}
+\arguments{
+\item{gefs_version}{GEFS version: v11 covers reference_datetimes from
+Jan 1, 2017 to Sept 24, 2020. v12 covers all dates following that.
+(earlier versions are not available on AWS).
+Note that gefs v11 has only 20 ensemble members, 16 day horizons, and
+all at 6 hour intervals.  gefs v11 also has fewer bands.
+export}
 }
 \value{
 Generates the strings for the 30 perturbed ensembles and control
