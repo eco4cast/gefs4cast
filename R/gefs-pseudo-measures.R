@@ -28,7 +28,7 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
                                  all_bands = gefs_all_bands(),
                                  url_builder = gefs_urls,
                                  cycles = c("00", "06", "12", "18"),
-                                 partitioning = c("reference_datetime", "site_id")) {
+                                 partitioning = c("reference_datetime")) {
 
   # N.B. partitioning on site_id is broken in arrow 11.x
   gdalcubes_cloud_config()
@@ -56,7 +56,8 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
 
   dplyr::bind_rows(df1, df0) |>
     dplyr::mutate(family = family) |>
-    arrow::write_dataset(path, partitioning=partitioning)
+    arrow::write_dataset(path, partitioning=partitioning,
+                         max_partitions = 1024 * 32)
 
 
   invisible(dates)
@@ -106,6 +107,7 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
     dplyr::inner_join(sites_df, by = "FID") |>
     dplyr::select(-"FID") |>
     tidyr::pivot_longer(vars,
-                        names_to = "variable", values_to = "prediction")
+                        names_to = "variable", values_to = "prediction") |>
+    dplyr::ungroup()
 
 }
