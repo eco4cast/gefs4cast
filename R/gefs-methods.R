@@ -33,7 +33,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                                              "site_id")) {
 
   # N.B. partitioning on site_id is broken in arrow 11.x
-
+  gdalcubes_cloud_config()
   assert_gdal_version("3.4.0")
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
