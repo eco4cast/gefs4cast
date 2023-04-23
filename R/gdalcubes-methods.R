@@ -1,3 +1,7 @@
+## Replace with megacube_extract
+## May need efi-format generalized appropriately
+## Then can deprecate all methods here.
+
 #' cube_extract
 #'
 #' @param reference_datetime date forecast is generated
@@ -13,7 +17,7 @@
 #'
 #' @export
 cube_extract <- function(reference_datetime,
-                         ensemble = gefs_horizon(),
+                         ensemble = gefs_ensemble(),
                          horizon = gefs_horizon(),
                          sites = neon_sites(),
                          bands = gefs_bands(),

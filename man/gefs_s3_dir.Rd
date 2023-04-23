@@ -6,15 +6,18 @@
 \usage{
 gefs_s3_dir(
   product = "stage1",
-  path = "neon4cast-drivers/noaa/gefs-v12/",
+  path = "neon4cast-drivers/noaa/",
+  gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
   endpoint = "https://sdsc.osn.xsede.org",
-  bucket = paste0("bio230014-bucket01/", path, product)
+  bucket = "bio230014-bucket01"
 )
 }
 \arguments{
 \item{product}{product code, e.g. stage1}
 
 \item{path}{path inside bucket}
+
+\item{gefs_version}{gefs-version (used in path)}
 
 \item{endpoint}{endpoint url}
 

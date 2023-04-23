@@ -33,33 +33,39 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                                              "site_id")) {
 
   # N.B. partitioning on site_id is broken in arrow 11.x
-
+  gdalcubes_cloud_config()
   assert_gdal_version("3.4.0")
   family <- "ensemble"
+  datetime <- "dummy"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)
     tryCatch({
-    df0 <- cube_extract(reference_datetime,
+    df0 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = "000",
                         sites = sites,
                         bands = gefs_bands(TRUE),
                         all_bands = gefs_all_bands(TRUE),
                         url_builder = url_builder,
-                        cycle = cycle)
+                        cycles = cycle)
 
-    df1 <- cube_extract(reference_datetime,
+    df1 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
                         horizon = horizon,
                         sites = sites,
                         bands = bands,
                         all_bands = all_bands,
                         url_builder = url_builder,
-                        cycle = cycle)
+                        cycles = cycle)
 
-    dplyr::bind_rows(df1, df0) |>
+    dplyr::bind_rows(df1, df0)  |>
+      dplyr::mutate(reference_datetime =
+                      lubridate::as_date(reference_datetime),
+                    horizon =
+                      lubridate::as_datetime(datetime) -
+                      lubridate::as_datetime(reference_datetime)) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
     },
@@ -77,6 +83,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 #' @param product product code, e.g. stage1
 #' @param path path inside bucket
 #' @param endpoint endpoint url
+#' @param gefs_version gefs-version (used in path)
 #' @param bucket bucket name
 #' @return s3 bucket object (an arrow S3 SubTreeFileSystem object)
 #' @export
@@ -85,15 +92,16 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 #' gefs_s3_dir()
 #' }
 gefs_s3_dir <- function(product = "stage1",
-                        path = "neon4cast-drivers/noaa/gefs-v12/",
+                        path = "neon4cast-drivers/noaa/",
+                        gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
                         endpoint = "https://sdsc.osn.xsede.org",
-                        bucket = paste0("bio230014-bucket01/", path, product))
+                        bucket = "bio230014-bucket01")
 {
-
+  bucket_path = fs::path(bucket, path, paste0("gefs-", gefs_version), product)
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
-  s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
+  s3_dir <- arrow::SubTreeFileSystem$create(bucket_path, s3)
   s3_dir
 }
 
