@@ -6,7 +6,7 @@
 \usage{
 cube_extract(
   reference_datetime,
-  ensemble = gefs_horizon(),
+  ensemble = gefs_ensemble(),
   horizon = gefs_horizon(),
   sites = neon_sites(),
   bands = gefs_bands(),

@@ -36,6 +36,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   gdalcubes_cloud_config()
   assert_gdal_version("3.4.0")
   family <- "ensemble"
+  datetime <- "dummy"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
   lapply(dates, function(reference_datetime) {
@@ -48,7 +49,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                         bands = gefs_bands(TRUE),
                         all_bands = gefs_all_bands(TRUE),
                         url_builder = url_builder,
-                        cycle = cycle)
+                        cycles = cycle)
 
     df1 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
@@ -57,7 +58,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                         bands = bands,
                         all_bands = all_bands,
                         url_builder = url_builder,
-                        cycle = cycle)
+                        cycles = cycle)
 
     dplyr::bind_rows(df1, df0)  |>
       dplyr::mutate(reference_datetime =
