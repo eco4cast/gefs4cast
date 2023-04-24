@@ -97,6 +97,8 @@ gefs_s3_dir <- function(product = "stage1",
                         endpoint = "https://sdsc.osn.xsede.org",
                         bucket = "bio230014-bucket01")
 {
+  if(gefs_version == "v11.1") gefs_version <- "v11"
+
   bucket_path = fs::path(bucket, path, paste0("gefs-", gefs_version), product)
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
@@ -129,6 +131,8 @@ gefs_bands <- function(zero_horizon = FALSE,
                        gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
   meta <- gefs_metadata()
 
+  if(gefs_version == "v11.1") gefs_version <- "v11"
+
   if(zero_horizon && gefs_version == "v12"){
     meta <- meta[!is.na(meta$horiz0_number), ]
     bands <- paste0("band", meta$horiz0_number)
@@ -151,6 +155,7 @@ gefs_bands <- function(zero_horizon = FALSE,
 gefs_all_bands <- function(zero_horizon = FALSE,
                            gefs_version = Sys.getenv("GEFS_VERSION", "v12")){
 
+  if(gefs_version == "v11.1") gefs_version <- "v11"
 
   if(zero_horizon){
     out <- switch(gefs_version,
@@ -236,7 +241,8 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
 gefs_ensemble <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
   switch(gefs_version,
          "v12" = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
-         "v11" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0")))
+         "v11" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0"))),
+         "v11.1" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0")))
   )
 }
 
