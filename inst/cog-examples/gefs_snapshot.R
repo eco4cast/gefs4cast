@@ -4,6 +4,7 @@ devtools::load_all()
 vis4cast::ignore_sigpipe()
 gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
 
+
 Sys.setenv("GEFS_VERSION"="v12")
 
 dates <- seq(as.Date("2020-09-24"), Sys.Date()-1, by=1)
@@ -63,6 +64,7 @@ bench::bench_time({
   missing_dates <- dates[!(as.character(dates) %in% have_dates)]
   gefs_pseudo_measures(missing_dates,  s3, horizon = "06")
 })
+
 
 bench::bench_time({
   s3 <- gefs_s3_dir("stage1")
