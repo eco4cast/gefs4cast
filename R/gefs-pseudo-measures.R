@@ -38,6 +38,9 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
 
   dates_groups <- split(dates, ceiling(seq_along(dates)/30))
   lapply(dates_groups, function(dates) {
+    message(reference_datetime)
+    tryCatch({
+
     df0 <- megacube_extract(dates,
                             ensemble = ensemble,
                             horizon = "000",
@@ -60,7 +63,10 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
       arrow::write_dataset(path, partitioning=partitioning,
                            max_partitions = 1024 * 32)
 
-  })
+  },
+  error = function(e) warning(paste("date", date, "failed with:\n", e),
+                              call.=FALSE),
+  finally=NULL)
   invisible(dates)
 }
 
