@@ -180,7 +180,6 @@ out
 #' @param reference_datetime date forecast is produced
 #' @param ens ensemble member for which URLs should be generated
 #' @param series data series (used only by gefs_v12)
-#' @param resolution grid resolution, used only by gefs_v12
 #' @param base NOAA GEFS AWS Bucket
 #' @export
 gefs_urls <- function(ens = "geavg",
