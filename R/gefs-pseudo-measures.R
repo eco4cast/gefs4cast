@@ -28,7 +28,8 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
                                  all_bands = gefs_all_bands(),
                                  url_builder = gefs_urls,
                                  cycles = c("00", "06", "12", "18"),
-                                 partitioning = c("reference_datetime")) {
+                                 partitioning = c("reference_datetime")
+                                 ) {
 
   # N.B. partitioning on site_id is broken in arrow 11.x
   gdalcubes_cloud_config()
@@ -67,6 +68,7 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
   error = function(e) warning(paste("date", date, "failed with:\n", e),
                               call.=FALSE),
   finally=NULL)
+  })
   invisible(dates)
 }
 
