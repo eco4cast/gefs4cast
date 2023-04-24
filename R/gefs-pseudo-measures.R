@@ -73,7 +73,8 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
                            max_partitions = 1024 * 32)
 
   },
-  error = function(e) warning(paste("date", date, "failed with:\n", e),
+  error = function(e) warning(paste("date chunk starting on",
+                                    min(dates), "failed with:\n", e),
                               call.=FALSE),
   finally=NULL)
   })

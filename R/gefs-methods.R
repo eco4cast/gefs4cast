@@ -69,7 +69,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
     },
-    error = function(e) warning(paste("date", date, "failed with:\n", e),
+    error = function(e) warning(paste("date", reference_datetime, "failed with:\n", e),
                                 call.=FALSE),
     finally=NULL)
     })
