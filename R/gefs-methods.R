@@ -208,7 +208,7 @@ gefs_urls <- function(ens = "geavg",
                                  "pgrb2a", "f", horizon),
                   "v11.1" = paste0(base, "/gefs.",
                                    format(reference_datetime, "%Y%m%d"),
-                                   "/", cycle, "/", "/pgrb2a/",
+                                   "/", cycle, "/pgrb2a/",
                                    ens, ".t", cycle, "z.", "pgrb2a",
                                    "f", horizon)
       )
