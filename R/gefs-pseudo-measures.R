@@ -39,7 +39,7 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
 
   dates_groups <- split(dates, ceiling(seq_along(dates)/30))
   lapply(dates_groups, function(dates) {
-    message(reference_datetime)
+    message(paste(min(dates), "---", max(dates)))
     tryCatch({
 
     df0 <- megacube_extract(dates,
