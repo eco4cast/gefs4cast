@@ -39,12 +39,22 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   datetime <- "dummy"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
+
+
+
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)
+
+    ## "v11.1" handling
+    zero_horizon <- "000"
+    if(reference_datetime >= as.Date("2018-07-27") &&
+       reference_datetime <= as.Date("2020-09-26"))
+      zero_horizon <- "00"
+
     tryCatch({
     df0 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
-                        horizon = "000",
+                        horizon = zero_horizon,
                         sites = sites,
                         bands = gefs_bands(TRUE),
                         all_bands = gefs_all_bands(TRUE),
