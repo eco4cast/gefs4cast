@@ -37,14 +37,22 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
   family <- "ensemble"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
+
+
   dates_groups <- split(dates, ceiling(seq_along(dates)/30))
   lapply(dates_groups, function(dates) {
+
+    zero_horizon <- "000"
+    if(min(dates) >= as.Date("2018-07-27") &&
+       min(dates) <= as.Date("2020-09-26"))
+      zero_horizon <- "00"
+
     message(paste(min(dates), "---", max(dates)))
     tryCatch({
 
     df0 <- megacube_extract(dates,
                             ensemble = ensemble,
-                            horizon = "000",
+                            horizon = zero_horizon,
                             sites = sites,
                             bands = gefs_bands(TRUE),
                             all_bands = gefs_all_bands(TRUE),
