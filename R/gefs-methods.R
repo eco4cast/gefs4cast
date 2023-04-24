@@ -181,36 +181,32 @@ gefs_urls <- function(ens = "geavg",
                       horizon = gefs_horizon(),
                       cycle = "00",
                       series = "atmos",
-                      resolution = "0p50",
                       gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
                       base = "https://noaa-gefs-pds.s3.amazonaws.com") {
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_time <- reference_datetime + lubridate::hours(horizon)
 
-
+  # v11 goes from 2017-01-01 to 2020-09-22.  BUT
+  # on 2018-07-27, file name and url structure shift slightly
 
   gribs <- switch(gefs_version,
                   "v12" = paste0(
                                 base,
                                 "/gefs.",format(reference_datetime, "%Y%m%d"),
-                                "/", cycle,
-                                "/",series,
-                                "/pgrb2ap5/",
-                                ens,
-                                ".t", cycle, "z.",
-                                "pgrb2a.0p50.",
+                                "/", cycle, "/", series, "/pgrb2ap5/",
+                                ens, ".t", cycle, "z.", "pgrb2a.0p50.",
                                 "f", horizon),
 # https://noaa-gefs-pds.s3.amazonaws.com/gefs.20170101/00/gec00.t00z.pgrb2af006
-                  "v11" = paste0(
-                    base,
-                    "/gefs.",format(reference_datetime, "%Y%m%d"),
-                    "/", cycle,
-                    "/",
-                    ens,
-                    ".t", cycle, "z.",
-                    "pgrb2a",
-                    "f", horizon)
-  )
+                  "v11" = paste0(base,  "/gefs.",
+                                 format(reference_datetime, "%Y%m%d"),
+                                 "/", cycle, "/", ens, ".t", cycle, "z.",
+                                 "pgrb2a", "f", horizon),
+                  "v11.1" = paste0(base, "/gefs.",
+                                   format(reference_datetime, "%Y%m%d"),
+                                   "/", cycle, "/", "/pgrb2a/",
+                                   ens, ".t", cycle, "z.", "pgrb2a",
+                                   "f", horizon)
+      )
   paste0("/vsicurl/", gribs)
 }
 
@@ -225,7 +221,8 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
   switch(gefs_version,
          "v12" = c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
                    stringr::str_pad(seq(246,840,by=6), 3, pad="0")),
-         "v11" = stringr::str_pad(seq(6,384, by=6), 3, pad="0")
+         "v11" = stringr::str_pad(seq(6,384, by=6), 3, pad="0"),
+         "v11.1" = stringr::str_pad(seq(6,384, by=6), 2, pad="0")
   )
 }
 
