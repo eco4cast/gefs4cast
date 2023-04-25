@@ -39,12 +39,22 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   datetime <- "dummy"
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
+
+
+
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)
+
+    ## "v11.1" handling
+    zero_horizon <- "000"
+    if(reference_datetime >= as.Date("2018-07-27") &&
+       reference_datetime <= as.Date("2020-09-26"))
+      zero_horizon <- "00"
+
     tryCatch({
     df0 <- megacube_extract(reference_datetime,
                         ensemble = ensemble,
-                        horizon = "000",
+                        horizon = zero_horizon,
                         sites = sites,
                         bands = gefs_bands(TRUE),
                         all_bands = gefs_all_bands(TRUE),
@@ -69,7 +79,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
     },
-    error = function(e) warning(paste("date", date, "failed with:\n", e),
+    error = function(e) warning(paste("date", reference_datetime, "failed with:\n", e),
                                 call.=FALSE),
     finally=NULL)
     })
@@ -97,6 +107,8 @@ gefs_s3_dir <- function(product = "stage1",
                         endpoint = "https://sdsc.osn.xsede.org",
                         bucket = "bio230014-bucket01")
 {
+  if(gefs_version == "v11.1") gefs_version <- "v11"
+
   bucket_path = fs::path(bucket, path, paste0("gefs-", gefs_version), product)
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
@@ -129,6 +141,9 @@ gefs_bands <- function(zero_horizon = FALSE,
                        gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
   meta <- gefs_metadata()
 
+  # ACTUALLY, v11 adopts v12 band numbering on 2018-07-19, not 2018-07-27
+  if(gefs_version == "v11.1") gefs_version <- "v12"
+
   if(zero_horizon && gefs_version == "v12"){
     meta <- meta[!is.na(meta$horiz0_number), ]
     bands <- paste0("band", meta$horiz0_number)
@@ -151,6 +166,8 @@ gefs_bands <- function(zero_horizon = FALSE,
 gefs_all_bands <- function(zero_horizon = FALSE,
                            gefs_version = Sys.getenv("GEFS_VERSION", "v12")){
 
+  # ACTUALLY, v11 adopts v12 band numbering on 2018-07-19, not 2018-07-27
+  if(gefs_version == "v11.1") gefs_version <- "v12"
 
   if(zero_horizon){
     out <- switch(gefs_version,
@@ -173,7 +190,6 @@ out
 #' @param reference_datetime date forecast is produced
 #' @param ens ensemble member for which URLs should be generated
 #' @param series data series (used only by gefs_v12)
-#' @param resolution grid resolution, used only by gefs_v12
 #' @param base NOAA GEFS AWS Bucket
 #' @export
 gefs_urls <- function(ens = "geavg",
@@ -181,36 +197,32 @@ gefs_urls <- function(ens = "geavg",
                       horizon = gefs_horizon(),
                       cycle = "00",
                       series = "atmos",
-                      resolution = "0p50",
                       gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
                       base = "https://noaa-gefs-pds.s3.amazonaws.com") {
   reference_datetime <- lubridate::as_date(reference_datetime)
   date_time <- reference_datetime + lubridate::hours(horizon)
 
-
+  # v11 goes from 2017-01-01 to 2020-09-22.  BUT
+  # on 2018-07-27, file name and url structure shift slightly
 
   gribs <- switch(gefs_version,
                   "v12" = paste0(
                                 base,
                                 "/gefs.",format(reference_datetime, "%Y%m%d"),
-                                "/", cycle,
-                                "/",series,
-                                "/pgrb2ap5/",
-                                ens,
-                                ".t", cycle, "z.",
-                                "pgrb2a.0p50.",
+                                "/", cycle, "/", series, "/pgrb2ap5/",
+                                ens, ".t", cycle, "z.", "pgrb2a.0p50.",
                                 "f", horizon),
 # https://noaa-gefs-pds.s3.amazonaws.com/gefs.20170101/00/gec00.t00z.pgrb2af006
-                  "v11" = paste0(
-                    base,
-                    "/gefs.",format(reference_datetime, "%Y%m%d"),
-                    "/", cycle,
-                    "/",
-                    ens,
-                    ".t", cycle, "z.",
-                    "pgrb2a",
-                    "f", horizon)
-  )
+                  "v11" = paste0(base,  "/gefs.",
+                                 format(reference_datetime, "%Y%m%d"),
+                                 "/", cycle, "/", ens, ".t", cycle, "z.",
+                                 "pgrb2a", "f", horizon),
+                  "v11.1" = paste0(base, "/gefs.",
+                                   format(reference_datetime, "%Y%m%d"),
+                                   "/", cycle, "/pgrb2a/",
+                                   ens, ".t", cycle, "z.", "pgrb2a",
+                                   "f", horizon)
+      )
   paste0("/vsicurl/", gribs)
 }
 
@@ -225,7 +237,8 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
   switch(gefs_version,
          "v12" = c(stringr::str_pad(seq(3,240,by=3), 3, pad="0"),
                    stringr::str_pad(seq(246,840,by=6), 3, pad="0")),
-         "v11" = stringr::str_pad(seq(6,384, by=6), 3, pad="0")
+         "v11" = stringr::str_pad(seq(6,384, by=6), 3, pad="0"),
+         "v11.1" = stringr::str_pad(seq(6,384, by=6), 2, pad="0")
   )
 }
 
@@ -239,7 +252,8 @@ gefs_horizon <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
 gefs_ensemble <- function(gefs_version = Sys.getenv("GEFS_VERSION", "v12")) {
   switch(gefs_version,
          "v12" = c("gec00", paste0("gep", stringr::str_pad(1:30, 2, pad="0"))),
-         "v11" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0")))
+         "v11" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0"))),
+         "v11.1" = c("gec00", paste0("gep", stringr::str_pad(1:20, 2, pad="0")))
   )
 }
 

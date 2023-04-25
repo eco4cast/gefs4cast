@@ -10,7 +10,6 @@ gefs_urls(
   horizon = gefs_horizon(),
   cycle = "00",
   series = "atmos",
-  resolution = "0p50",
   gefs_version = Sys.getenv("GEFS_VERSION", "v12"),
   base = "https://noaa-gefs-pds.s3.amazonaws.com"
 )
@@ -28,8 +27,6 @@ and ensemble.}
 (i.e. "00", "06", "12", or "18" hours into reference_datetime)}
 
 \item{series}{data series (used only by gefs_v12)}
-
-\item{resolution}{grid resolution, used only by gefs_v12}
 
 \item{gefs_version}{GEFS version: v11 covers reference_datetimes from
 Jan 1, 2017 to Sept 24, 2020. v12 covers all dates following that.

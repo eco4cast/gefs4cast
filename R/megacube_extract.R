@@ -45,13 +45,16 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
     # unpack overloaded time dimension:
     dplyr::left_join(dplyr::mutate(gribs, time=as.character(time)), by="time") |>
     dplyr::select(-"url") |> dplyr::select(-"time") |>
-    dplyr::mutate(datetime = reference_datetime + lubridate::hours(cycle)) |>
+    dplyr::mutate(datetime = reference_datetime +
+                    lubridate::hours(cycle) +
+                    lubridate::hours(horizon)) |>
     # feature-id to site_id:
     dplyr::inner_join(sites_df, by = "FID") |>
     dplyr::select(-"FID") |>
     # "long" (EFI) format
     tidyr::pivot_longer(vars,
-                        names_to = "variable", values_to = "prediction") |>
+                        names_to = "variable",
+                        values_to = "prediction") |>
     dplyr::ungroup()
 
 }
