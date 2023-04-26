@@ -13,37 +13,33 @@ For variable definitions, see the [NOAA tables](https://www.nco.ncep.noaa.gov/pm
 
 # Accessing the data
 
-## R 
+Use `arrow` for quick remote access to the database. Specifying the `reference_datetime={date}` is optional but will give the best performance.
 
-```r
-library(arrow)
-library(dplyr)
-Sys.unsetenv("AWS_DEFAULT_REGION")
-s3 <- s3_bucket("neon4cast-drivers/noaa/gefs-v12/stage1",
-                endpoint_override = "data.ecoforecast.org", 
-                anonymous = TRUE)
-df <- open_dataset(s3, partitioning=c("start_date", "cycle"))
-df |> filter(start_date == "2022-04-02", cycle == "00", ensemble==1)
+### R 
 
+```{r}
+date <- "2020-09-24"
+bucket <- "bio230014-bucket01"
+path <- "neon4cast-drivers/noaa/gefs-v12/stage1"
+endpoint <- "https://sdsc.osn.xsede.org"
+
+stage1 <- 
+  glue::glue("{bucket}/{path}/reference_datetime={date}") |>
+  arrow::s3_bucket(endpoint_override = endpoint, anonymous = TRUE) |>
+  arrow::open_dataset()
 ```
 
-## Python
+Now we can use `dplyr` commands to subset the desired data without downloading the entire data product. 
 
-```python
-import pyarrow.dataset as ds
-from pyarrow import fs
+```{r}
+library(dplyr)
 
-s3 = fs.S3FileSystem(endpoint_override = "data.ecoforecast.org", anonymous = True)
-dataset = ds.dataset(
-    "neon4cast-drivers/noaa/gefs-v12/stage1",
-    format="parquet",
-    filesystem=s3,
-    partitioning=["start_date", "cycle"]
-)
-expression = (
-              (ds.field("start_date") == "2022-04-01") &
-              (ds.field("cycle") == 00) &
-              (ds.field("ensemble") == 1)
-              )
-ex = dataset.to_table(filter=expression)
+q <- stage1 |> 
+  filter(variable == "TMP",
+         site_id == "BART") |>
+  group_by(datetime) |>
+  summarise(temp = mean(prediction)) |>
+  arrange(datetime)
+
+df <- q |> collect()
 ```
