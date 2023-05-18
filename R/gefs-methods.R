@@ -32,7 +32,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             partitioning = c("reference_datetime",
                                              "site_id")) {
 
-  # N.B. partitioning on site_id is broken in arrow 11.x
+  # N.B. partitioning on site_id can fail in arrow 11.x
   gdalcubes_cloud_config()
   assert_gdal_version("3.4.0")
   family <- "ensemble"
@@ -40,7 +40,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
 
-
+  sites <- sites_format(sites)
 
   lapply(dates, function(reference_datetime) {
     message(reference_datetime)

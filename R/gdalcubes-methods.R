@@ -1,6 +1,8 @@
-## Replace with megacube_extract
+
+########## DEPRECATED ##########################
+## Replaced with megacube_extract
 ## May need efi-format generalized appropriately
-## Then can deprecate all methods here.
+
 
 #' cube_extract
 #'
@@ -25,6 +27,8 @@ cube_extract <- function(reference_datetime,
                          url_builder = gefs_urls,
                          cycle = "00",
                          shm = NULL) {
+
+  sites <- sites_format(sites)
 
   # overload time dimension as time + ensemble
   date_time <- reference_datetime + lubridate::hours(horizon)
@@ -87,6 +91,15 @@ efi_format_cubeextract <- function(dfs,
                   horizon = datetime - lubridate::as_datetime(reference_datetime))
   df
 }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -216,8 +229,3 @@ grib_to_tif <- function(ens,
                          COG=TRUE,
                          creation_options = creation_options)
 }
-
-
-
-
-
