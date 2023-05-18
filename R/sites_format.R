@@ -7,7 +7,7 @@ sites_format <- function(sites) {
   }
 
   if (!("site_id" %in% vars)) {
-    sites <- tibble::rowname_to_column(sites, "site_id")
+    sites <- tibble::rownames_to_column(sites, "site_id")
   }
 
   if (!inherits(sites, "sf")) {
