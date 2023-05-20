@@ -19,15 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - run: |
+      - name: Install
+        shell: Rscript {0}
+        run: |
           remotes::install_deps(".")
           remotes::install_github("eco4cast/vis4cast")
           devtools::install()
-          source("inst/cog-examples/gefs_cron.R")
-        shell: Rscript {0}
 
-      - name: Upload results
-        uses: actions/upload-artifact@v3
-        with:
-          name: results
-          path: report.html
+      - name: Update GEFS
+        shell: Rscript {0}
+        run: |
+          source("inst/cog-examples/gefs_cron.R")
+
+
