@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 
-name: docker
+name: gefs_osn
 
 jobs:
   docker:
@@ -23,8 +23,7 @@ jobs:
           remotes::install_deps(".")
           remotes::install_github("eco4cast/vis4cast")
           devtools::install()
-          library("gefs4cast")
-          # source("inst/cog-examples/gefs_cron.R")
+          source("inst/cog-examples/gefs_cron.R")
         shell: Rscript {0}
 
       - name: Upload results
