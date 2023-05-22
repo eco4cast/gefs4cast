@@ -49,6 +49,8 @@ cfs_s3_dir <- function(product,
                        endpoint = "https://sdsc.osn.xsede.org",
                        bucket = paste0("bio230014-bucket01/", path, product)) {
 
+  ignore_sigpipe()
+
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))

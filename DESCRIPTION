@@ -24,22 +24,26 @@ Suggests:
     knitr,
     rmarkdown,
     spelling,
+    brio,
+    decor,
+    cpp11,
+    vctrs,
+    bench,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-US
 Imports: 
+    arrow,
     dplyr,
     readr,
     purrr,
-    stars,
-    arrow,
-    glue,
-    stringr,
-    fs,
-    lubridate,
-    tibble,
     tidyr,
-    gdalcubes,
+    tibble,
+    lubridate,
+    stringr,
+    glue,
+    fs,
     sf,
-    vctrs
+    stars,
+    gdalcubes
 VignetteBuilder: knitr

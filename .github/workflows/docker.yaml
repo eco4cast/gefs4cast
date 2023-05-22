@@ -22,10 +22,7 @@ jobs:
       - name: Install
         shell: Rscript {0}
         run: |
-          remotes::install_deps(".", upgrade="never")
-          remotes::install_github("eco4cast/vis4cast", upgrade="never")
-          install.packages("bench")
-          devtools::install()
+          devtools::install(dependencies=TRUE, upgrade="never")
 
       - name: Update GEFS
         shell: Rscript {0}
