@@ -4,6 +4,9 @@
 #' Avoid SIGPIPE error in scripts using Arrow S3
 #' @export
 ignore_sigpipe <- function() {
+
+  if(.Platform$OS.type == "windows") return(invisible(NULL))
+
   requireNamespace("decor", quietly = TRUE)
   requireNamespace("brio", quietly = TRUE)
   requireNamespace("cpp11", quietly = TRUE)
