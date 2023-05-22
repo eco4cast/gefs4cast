@@ -1,7 +1,6 @@
 ## setup
 library(gdalcubes)
 library(gefs4cast)
-vis4cast::ignore_sigpipe()
 #gdalcubes::gdalcubes_options(parallel=2*parallel::detectCores())
 gdalcubes::gdalcubes_options(parallel=TRUE)
 
