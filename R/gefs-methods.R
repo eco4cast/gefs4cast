@@ -108,13 +108,14 @@ gefs_s3_dir <- function(product = "stage1",
                         bucket = "bio230014-bucket01")
 {
   if(gefs_version == "v11.1") gefs_version <- "v11"
-
   ignore_sigpipe()
 
   bucket_path = fs::path(bucket, path, paste0("gefs-", gefs_version), product)
+
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
+  s3$CreateDir(bucket_path)
   s3_dir <- arrow::SubTreeFileSystem$create(bucket_path, s3)
   s3_dir
 }
