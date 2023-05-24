@@ -115,11 +115,18 @@ gefs_s3_dir <- function(product = "stage1",
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
-  s3$CreateDir(bucket_path)
   s3_dir <- arrow::SubTreeFileSystem$create(bucket_path, s3)
+
+  tryCatch(s3$CreateDir(bucket_path),
+           error = function(e) NULL, finally=NULL)
+
   s3_dir
 }
 
+
+dir_exists <- function(s3_dir) {
+  tryCatch()
+}
 
 #' gefs metadata
 #'
