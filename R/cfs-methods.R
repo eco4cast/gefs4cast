@@ -54,7 +54,7 @@ cfs_s3_dir <- function(product,
   s3 <- arrow::S3FileSystem$create(endpoint_override = endpoint,
                                    access_key = Sys.getenv("OSN_KEY"),
                                    secret_key = Sys.getenv("OSN_SECRET"))
-  s3$CreateDir(bucket_path)
+  s3$CreateDir(bucket)
   s3_dir <- arrow::SubTreeFileSystem$create(bucket, s3)
   s3_dir
 }
