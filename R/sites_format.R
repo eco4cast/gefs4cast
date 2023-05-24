@@ -11,8 +11,8 @@ sites_format <- function(sites) {
   }
 
   if (!inherits(sites, "sf")) {
-    longitude <- grepl("^[Ll]ong", vars)
-    latitude <- grepl("^[Ll]at", vars)
+    longitude <- grep("^[Ll]ong", vars)
+    latitude <- grep("^[Ll]at", vars)
     sites <- sf::st_as_sf(sites, coords=c(longitude,latitude), crs=4326)
   }
   sites
