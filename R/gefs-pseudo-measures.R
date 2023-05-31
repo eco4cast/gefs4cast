@@ -38,7 +38,7 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
   if(any(grepl("gespr", ensemble))) family <- "spread"
 
   sites <- sites_format(sites)
-
+  dates <- as.Date(dates)
   dates_groups <- split(dates, ceiling(seq_along(dates)/30))
   lapply(dates_groups, function(dates) {
 
