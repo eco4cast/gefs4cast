@@ -3,7 +3,7 @@ to_hourly <- function(df,
                       psuedo = FALSE){
 
   if(!psuedo){
-    reference_datetime <- lubridate::as_datetime(df$reference_datetime)[1]
+    reference_datetime <- lubridate::as_datetime(df$reference_datetime)
   }else{
     reference_datetime <- NA
   }
@@ -41,7 +41,8 @@ to_hourly <- function(df,
     dplyr::arrange(site_id, family, ensemble, datetime) |>
     dplyr::mutate(prediction =  imputeTS::na_interpolation(prediction, option = "linear")) |>
     dplyr::mutate(prediction = ifelse(variable == "TMP", prediction + 273, prediction)) |>
-    dplyr::mutate(prediction = ifelse(variable == "RH", prediction/100, prediction))
+    dplyr::mutate(prediction = ifelse(variable == "RH", prediction/100, prediction)) |>
+    dplyr::ungroup()
 
   fluxes <- df |>
     dplyr::select(site_id, family, horizon, ensemble, datetime, variable, prediction) |>
