@@ -22,7 +22,7 @@ jobs:
       - name: Install
         shell: Rscript {0}
         run: |
-          install.packages("arrow","dplyr","readr","furrr","tidyr,"tibble","lubridate", "imputeTS")
+          install.packages(c("arrow","dplyr","readr","furrr","tidyr,"tibble","lubridate", "imputeTS"))
 
       - name: Update Stage3
         shell: Rscript {0}
