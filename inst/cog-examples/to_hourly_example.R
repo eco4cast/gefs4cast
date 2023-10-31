@@ -25,7 +25,7 @@ stage2 <- function(start_date, site_id = NA){
     mutate(reference_datetime = start_date)
 
   if(!is.na(site_id)){
-    site_df <- site_df |> dplyr::mutate(site_id = site__id)
+    site_df <- site_df |> dplyr::mutate(site_id = site_id)
   }
 
   hourly_df <- to_hourly(site_df, use_solar_geom = TRUE, psuedo = TRUE)

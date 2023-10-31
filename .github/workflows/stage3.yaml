@@ -1,0 +1,33 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+
+name: gefs_osn_stage3
+
+jobs:
+  docker:
+    runs-on: [self-hosted]
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      OSN_KEY: ${{ secrets.OSN_KEY }}
+      OSN_SECRET: ${{ secrets.OSN_SECRET }}
+#    container: rocker/geospatial
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install
+        shell: Rscript {0}
+        run: |
+          install.packages("arrow","dplyr","readr","furrr","tidyr,"tibble","lubridate", "imputeTS")
+
+      - name: Update Stage3
+        shell: Rscript {0}
+        run: |
+          source("inst/cog-examples/to_hourly.R")
+          source("inst/cog-examples/update_stage3.R")
+
+

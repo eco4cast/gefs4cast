@@ -1,6 +1,3 @@
-library(minioclient)
-source("to_hourly.R")
-
 site_list <- readr::read_csv(paste0("https://github.com/eco4cast/",
                                     "neon4cast-noaa-download/",
                                     "raw/master/noaa_download_site_list.csv"),
