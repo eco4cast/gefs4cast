@@ -45,7 +45,7 @@ megacube_extract <- function(dates = Sys.Date() - 1L,
     # unpack overloaded time dimension:
     dplyr::left_join(dplyr::mutate(gribs, time=as.character(time)), by="time") |>
     dplyr::select(-"url") |> dplyr::select(-"time") |>
-    dplyr::mutate(datetime = reference_datetime +
+    dplyr::mutate(datetime = lubridate::as_datetime(reference_datetime) +
                     lubridate::hours(cycle) +
                     lubridate::hours(horizon)) |>
     # feature-id to site_id:
