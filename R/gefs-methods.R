@@ -18,6 +18,7 @@
 #' @param cycle cycle indicating start time when forecast was generated
 #' (i.e. "00", "06", "12", or "18" hours into reference_datetime)
 #' @param partitioning partitioning structure used in writing the parquet data
+#' @param s3_endpoint endpoint to use for saving parquet files to cloud storage
 #' @export
 #'
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
