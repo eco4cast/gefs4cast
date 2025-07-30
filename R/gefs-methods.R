@@ -79,10 +79,11 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
 
     dplyr::bind_rows(df1, df0)  |>
       dplyr::mutate(reference_datetime =
-                      lubridate::as_date(reference_datetime),
-                    horizon =
-                      lubridate::as_datetime(datetime) -
-                      lubridate::as_datetime(reference_datetime)) |>
+                      lubridate::as_date(reference_datetime)#,
+                    # horizon =
+                    #   lubridate::as_datetime(datetime) -
+                    #   lubridate::as_datetime(reference_datetime)
+                    ) |>
       dplyr::mutate(family = family) |>
       #arrow::write_dataset(path, partitioning=partitioning)
       duckdbfs::write_dataset(paste0("s3://", path), format = 'parquet',
