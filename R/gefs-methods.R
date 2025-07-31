@@ -30,13 +30,7 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                             url_builder = gefs_urls,
                             cycle = "00",
                             partitioning = c("reference_datetime",
-                                             "site_id"),
-                            s3_endpoint = 'https://sdsc.osn.xsede.org') {
-
-  duckdbfs::duckdb_secrets(
-    endpoint = s3_endpoint,
-    key = Sys.getenv("OSN_KEY"),
-    secret = Sys.getenv("OSN_SECRET"))
+                                             "site_id")) {
 
   # N.B. partitioning on site_id can fail in arrow 11.x
   gdalcubes_cloud_config()
