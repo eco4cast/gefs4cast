@@ -45,5 +45,6 @@ Imports:
     fs,
     sf,
     stars,
-    gdalcubes
+    gdalcubes,
+    duckdbfs
 VignetteBuilder: knitr

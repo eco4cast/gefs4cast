@@ -14,8 +14,7 @@ gefs_to_parquet(
   all_bands = gefs_all_bands(),
   url_builder = gefs_urls,
   cycle = "00",
-  partitioning = c("reference_datetime", "site_id"),
-  s3_endpoint = "https://sdsc.osn.xsede.org"
+  partitioning = c("reference_datetime", "site_id")
 )
 }
 \arguments{

@@ -69,8 +69,10 @@ gefs_pseudo_measures <- function(dates = Sys.Date() - 1L,
 
     dplyr::bind_rows(df1, df0) |>
       dplyr::mutate(family = family) |>
-      arrow::write_dataset(path, partitioning=partitioning,
-                           max_partitions = 1024 * 32)
+      # arrow::write_dataset(path, partitioning=partitioning,
+      #                      max_partitions = 1024 * 32)
+      duckdbfs::write_dataset(paste0("s3://", path), format = 'parquet',
+                              partitioning = partitioning)
 
   },
   error = function(e) warning(paste("date chunk starting on",
