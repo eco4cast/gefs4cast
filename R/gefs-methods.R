@@ -79,9 +79,9 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
                     #   lubridate::as_datetime(reference_datetime)
                     ) |>
       dplyr::mutate(family = family) |>
-      #arrow::write_dataset(path, partitioning=partitioning)
-      duckdbfs::write_dataset(paste0("s3://", path), format = 'parquet',
-                              partitioning = partitioning)
+      arrow::write_dataset(path, partitioning=partitioning)
+      #duckdbfs::write_dataset(paste0("s3://", path), format = 'parquet',
+      #                        partitioning = partitioning)
     },
     error = function(e) warning(paste("date", reference_datetime, "failed with:\n", e),
                                 call.=FALSE),
