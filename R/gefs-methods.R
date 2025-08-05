@@ -18,7 +18,6 @@
 #' @param cycle cycle indicating start time when forecast was generated
 #' (i.e. "00", "06", "12", or "18" hours into reference_datetime)
 #' @param partitioning partitioning structure used in writing the parquet data
-#' @param s3_endpoint endpoint to use for saving parquet files to cloud storage
 #' @export
 #'
 gefs_to_parquet <- function(dates = Sys.Date() - 1L,
@@ -74,9 +73,9 @@ gefs_to_parquet <- function(dates = Sys.Date() - 1L,
     dplyr::bind_rows(df1, df0)  |>
       dplyr::mutate(reference_datetime =
                       lubridate::as_date(reference_datetime)#,
-                    # horizon =
-                    #   lubridate::as_datetime(datetime) -
-                    #   lubridate::as_datetime(reference_datetime)
+                     horizon =
+                       lubridate::as_datetime(datetime) -
+                       lubridate::as_datetime(reference_datetime)
                     ) |>
       dplyr::mutate(family = family) |>
       arrow::write_dataset(path, partitioning=partitioning)
